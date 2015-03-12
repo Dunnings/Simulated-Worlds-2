@@ -1,0 +1,95 @@
+#include "boidManager.h"
+#include "boid.h"
+
+ID3D11Device* GameData::p3d;
+MyEffectFactory* GameData::EF;
+
+boidManager::boidManager()
+{
+	for (int i = 0; i < 100; i++)
+	{
+		spawnBoid(BOID_PREY);
+	}
+	spawnBoid(BOID_PREDATOR);
+}
+
+boidManager::~boidManager()
+{
+
+}
+
+void boidManager::spawnBoid(BoidType type)
+{
+	Boid* newBoid = new Boid("roach.cmo", GameData::p3d, GameData::EF);
+	if (type == BoidType::BOID_PREDATOR)
+	{
+		newBoid = new Boid("table.cmo", GameData::p3d, GameData::EF);
+		newBoid->SetScale(0.2f);
+		newBoid->aquireTarget(myBoids);
+	}
+	else
+	{
+		float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
+		newBoid->setDirection(Vector3(r1, r2, r3));
+		newBoid->setSpeed(r4);
+	}
+	newBoid->setType(type);
+	myBoids.push_back(newBoid);
+}
+
+void boidManager::Tick(GameData* GD)
+{
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); )
+	{
+		Boid* currentBoid = (*it);
+		Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
+		if (currentBoid->getType() == BOID_PREDATOR)
+		{
+			if (currentBoid->getTarget() == nullptr)
+			{
+				currentBoid->aquireTarget(myBoids);
+			}
+		}
+		else
+		{
+			for (vector<Boid*>::iterator it2 = it; it2 != myBoids.end(); ++it2)
+			{
+				Boid* newBoid = (*it2);
+				if (currentBoid->getType() < newBoid->getType())
+				{
+					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < SimulationParameters::boidSight)
+					{
+						Vector3 fearModifier;
+						fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						fearModifier.Normalize();
+						modifier += fearModifier;
+
+					}
+				}
+			}
+		}
+		if (currentBoid->isAlive())
+		{
+			currentBoid->Tick(GD, modifier);
+			++it;
+		}
+		else
+		{
+			it = myBoids.erase(it);
+		}
+		
+	}
+	GameObject::Tick(GD);
+}
+
+void boidManager::Draw(DrawData* DD)
+{
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); ++it)
+	{
+		Boid* currentBoid = (*it);
+		currentBoid->Draw(DD);
+	}
+}
