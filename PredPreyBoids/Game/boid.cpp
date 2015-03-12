@@ -2,8 +2,9 @@
 #include <Windows.h>
 
 
-Boid::Boid(string _fileName, ID3D11Device* _pd3dDevice, MyEffectFactory* _EF) :CMOGO(_fileName, _pd3dDevice, _EF)
+Boid::Boid()
 {
+	init(11.0f, GameData::p3d);
 	m_pos.y = 10.0f;
 	m_scale = 2.0f * Vector3::One;
 }
@@ -26,7 +27,8 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 		Vector3 dir = m_target->GetPos() - m_pos;
 		dir.Normalize();
 		m_direction = dir;
-		m_speed = m_target->getSpeed() * 1.3f;
+		m_speed = SimulationParameters::boidMaxSpeed * 2.0f;
+		modifier = Vector3(0.0f, 0.0f, 0.0f);
 		if ((m_target->GetPos() - m_pos).Length() < 5.0f)
 		{
 			m_target->Damage(100.0f);
@@ -62,7 +64,7 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 
 void Boid::Draw(DrawData* DD)
 {
-	CMOGO::Draw(DD);
+	VBCube::Draw(DD);
 }
 
 void Boid::aquireTarget(vector<Boid*> boidVector)

@@ -6,7 +6,7 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 200; i++)
 	{
 		spawnBoid(BOID_PREY);
 	}
@@ -20,11 +20,12 @@ boidManager::~boidManager()
 
 void boidManager::spawnBoid(BoidType type)
 {
-	Boid* newBoid = new Boid("roach.cmo", GameData::p3d, GameData::EF);
-	if (type == BoidType::BOID_PREDATOR)
+	Boid* newBoid = new Boid();
+	newBoid->SetScale(1.0f);
+	if (type == BOID_PREDATOR)
 	{
-		newBoid = new Boid("table.cmo", GameData::p3d, GameData::EF);
-		newBoid->SetScale(0.2f);
+		newBoid = new Boid();
+		newBoid->SetScale(2.0f);
 		newBoid->aquireTarget(myBoids);
 	}
 	else
@@ -61,6 +62,7 @@ void boidManager::Tick(GameData* GD)
 			for (vector<Boid*>::iterator it2 = it; it2 != myBoids.end(); ++it2)
 			{
 				Boid* newBoid = (*it2);
+				//Running away
 				if (currentBoid->getType() < newBoid->getType())
 				{
 					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < SimulationParameters::boidSight)
@@ -70,6 +72,7 @@ void boidManager::Tick(GameData* GD)
 						modifier += fearModifier;
 					}
 				}
+				//Keeping away from similar
 				else if (currentBoid->getType() == newBoid->getType())
 				{
 					float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
@@ -92,18 +95,17 @@ void boidManager::Tick(GameData* GD)
 				}
 			}
 		}
-		if (count > 0)
+		if (count > 0 && modifier == Vector3(0.0f, 0.0f, 0.0f))
 		{
 			avDir /= count;
 			avPos /= count;
 			Vector3 toAverage = avPos - m_pos;
 			toAverage.Normalize();
 			avDir.Normalize();
-			Vector3 groupModifier = (avDir * 0.5f) + (toAverage * 0.5f);
-			modifier += groupModifier;
+			Vector3 groupModifier = (avDir * 0.2f) + (toAverage * 0.7f);
+			modifier = groupModifier;
 		}
-		Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos) * 2.0f;
-		centerModifier.Normalize();
+		Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos()) * 0.3f;
 		modifier += centerModifier;
 		if (currentBoid->isAlive())
 		{

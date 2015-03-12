@@ -1,12 +1,15 @@
 #ifndef _BOID_H_
 #define _BOID_H_
-#include "CMOGO.h"
+#include "VBCube.h"
 #include "gamedata.h"
+#include <vector>
 
-class Boid : public CMOGO
+using std::vector;
+
+class Boid : public VBCube
 {
 public:
-	Boid(string _fileName, ID3D11Device* _pd3dDevice, MyEffectFactory* _EF);
+	Boid();
 	~Boid();
 
 	virtual void Tick(GameData* GD, Vector3 modifier);

@@ -3,7 +3,6 @@
   <ItemGroup>
     <MeshContentTask Include="table.FBX" />
     <MeshContentTask Include="treasure_chest.FBX" />
-    <MeshContentTask Include="A:\Dropbox\Dropbox\University\Year 2\Simulating Worlds\Assignment 2\DXBase\Assets\roach.FBX" />
   </ItemGroup>
   <ItemGroup>
     <ImageContentTask Include="grass.jpg" />
