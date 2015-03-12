@@ -67,7 +67,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.groupDistance = 200.0f;
 	para.groupHeading = 10.0f;
 	para.boidSight = 100.0f;
-	para.boidMaxSpeed = 100.0f;
+	para.boidMaxSpeed = 50.0f;
 	para.boidFearBoost = 20.0f;
 	para.restTime = 1000.0f;
 	para.mapSize = 800.0f;

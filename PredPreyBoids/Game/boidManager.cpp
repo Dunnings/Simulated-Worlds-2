@@ -45,6 +45,9 @@ void boidManager::Tick(GameData* GD)
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); )
 	{
 		Boid* currentBoid = (*it);
+		Vector3 avDir;
+		Vector3 avPos;
+		int count = 0;
 		Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
 		if (currentBoid->getType() == BOID_PREDATOR)
 		{
@@ -62,15 +65,46 @@ void boidManager::Tick(GameData* GD)
 				{
 					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < SimulationParameters::boidSight)
 					{
-						Vector3 fearModifier;
-						fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						fearModifier.Normalize();
 						modifier += fearModifier;
-
+					}
+				}
+				else if (currentBoid->getType() == newBoid->getType())
+				{
+					float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
+					if (dist < 20.0f)
+					{
+						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						contactModifier *= (dist / 20.0f);
+						contactModifier.Normalize();
+						modifier += contactModifier;
+					}
+					else
+					{
+						if (dist < SimulationParameters::groupDistance)
+						{
+							avDir += newBoid->getDirection();
+							avPos += newBoid->GetPos();
+							count++;
+						}
 					}
 				}
 			}
 		}
+		if (count > 0)
+		{
+			avDir /= count;
+			avPos /= count;
+			Vector3 toAverage = avPos - m_pos;
+			toAverage.Normalize();
+			avDir.Normalize();
+			Vector3 groupModifier = (avDir * 0.5f) + (toAverage * 0.5f);
+			modifier += groupModifier;
+		}
+		Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos) * 2.0f;
+		centerModifier.Normalize();
+		modifier += centerModifier;
 		if (currentBoid->isAlive())
 		{
 			currentBoid->Tick(GD, modifier);
