@@ -36,10 +36,13 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 			}
 		}
 	}
+	Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos);
+	centerModifier.Normalize();
+	m_direction += centerModifier * 0.2;
 	newPos += (m_direction + modifier) * m_speed * GD->dt;
 	newPos += modifier;
 	bool canMove = true;
-	//Too far right
+	/*Too far right
 	if (newPos.x > SimulationParameters::mapSize / 2 || newPos.x < -(SimulationParameters::mapSize / 2))
 	{
 		m_direction.x = -m_direction.x;
@@ -50,6 +53,7 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 		m_direction.z = -m_direction.z;
 		canMove = false;
 	}
+	*/
 	if (canMove)
 	{
 		Vector3 yawDirection = (m_direction + modifier);

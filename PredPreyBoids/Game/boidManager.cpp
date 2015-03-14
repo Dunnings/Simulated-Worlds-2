@@ -102,9 +102,6 @@ void boidManager::Tick(GameData* GD)
 			Vector3 groupModifier = (avDir * 0.5f) + (toAverage * 0.5f);
 			modifier += groupModifier;
 		}
-		Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos) * 2.0f;
-		centerModifier.Normalize();
-		modifier += centerModifier;
 		if (currentBoid->isAlive())
 		{
 			currentBoid->Tick(GD, modifier);
