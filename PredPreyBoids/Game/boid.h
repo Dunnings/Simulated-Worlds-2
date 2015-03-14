@@ -2,14 +2,15 @@
 #define _BOID_H_
 #include "VBCube.h"
 #include "gamedata.h"
+#include "CMOGO.h"
 #include <vector>
 
 using std::vector;
 
-class Boid : public VBCube
+class Boid : public CMOGO
 {
 public:
-	Boid();
+	Boid(string _fileName);
 	~Boid();
 
 	virtual void Tick(GameData* GD, Vector3 modifier);
@@ -21,7 +22,7 @@ public:
 	BoidType getType() { return m_type; };
 	void setType(BoidType type) { m_type = type; };
 	Boid* getTarget() { return m_target; };
-	void aquireTarget(vector<Boid*> boidVector);
+	void setTarget(Boid* t) { m_target = t; };
 	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
 	bool isAlive() { return m_alive; };
 protected:

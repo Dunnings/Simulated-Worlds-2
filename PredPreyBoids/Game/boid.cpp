@@ -2,9 +2,8 @@
 #include <Windows.h>
 
 
-Boid::Boid()
+Boid::Boid(string _fileName) : CMOGO(_fileName, GameData::p3d, GameData::EF)
 {
-	init(11.0f, GameData::p3d);
 	m_pos.y = 10.0f;
 	m_scale = 2.0f * Vector3::One;
 }
@@ -16,10 +15,7 @@ Boid::~Boid()
 
 void Boid::Tick(GameData* GD, Vector3 modifier)
 {
-	//Initialise variable to hold new position
-	Vector3 newPos = m_pos;
-	//Set direction and position y value to 0
-	newPos.y = 0.0f;
+	modifier.Normalize();
 	m_direction.y = 0.0f;
 	//If the boid has a target set direction to aim at that target and go toward it
 	if (m_target != nullptr)
@@ -27,8 +23,9 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 		Vector3 dir = m_target->GetPos() - m_pos;
 		dir.Normalize();
 		m_direction = dir;
-		m_speed = SimulationParameters::boidMaxSpeed * 2.0f;
-		modifier = Vector3(0.0f, 0.0f, 0.0f);
+		m_speed = SimulationParameters::boidMaxSpeed;
+		m_speed *= 1.5f;
+		m_speed += 0.02f * (m_target->GetPos() - m_pos).Length();
 		if ((m_target->GetPos() - m_pos).Length() < 5.0f)
 		{
 			m_target->Damage(100.0f);
@@ -37,62 +34,30 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 				m_target = nullptr;
 			}
 		}
+		m_direction.Normalize();
+		m_pos += m_direction * m_speed * GD->dt;
 	}
-	Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos);
-	centerModifier.Normalize();
-	m_direction += centerModifier * 0.2;
-	newPos += (m_direction + modifier) * m_speed * GD->dt;
-	newPos += modifier;
-	bool canMove = true;
-	/*Too far right
-	if (newPos.x > SimulationParameters::mapSize / 2 || newPos.x < -(SimulationParameters::mapSize / 2))
+	else
 	{
-		m_direction.x = -m_direction.x;
-		canMove = false;
+		if (m_pos.x > SimulationParameters::mapSize / 2 || m_pos.x < -(SimulationParameters::mapSize / 2) || m_pos.z > SimulationParameters::mapSize / 2 || m_pos.z < -(SimulationParameters::mapSize / 2))
+		{
+			Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos);
+			centerModifier.Normalize();
+			m_direction += centerModifier;
+		}
+		//Modify m_pos
+		modifier.Normalize();
+		m_direction += modifier;
+		m_direction.Normalize();
+		m_pos += m_direction * m_speed * GD->dt;
 	}
-	if (newPos.z > SimulationParameters::mapSize / 2 || newPos.z < -(SimulationParameters::mapSize / 2))
-	{
-		m_direction.z = -m_direction.z;
-		canMove = false;
-	}
-	*/
-	if (canMove)
-	{
-		Vector3 yawDirection = (m_direction + modifier);
-		yawDirection.Normalize();
-		m_yaw = atan2(yawDirection.x, yawDirection.z);
-		m_pos = newPos;
-	}
+	//Point in direction of travel
+	m_yaw = atan2(m_direction.x, m_direction.z);
 	GameObject::Tick(GD);
 }
 
 void Boid::Draw(DrawData* DD)
 {
-	VBCube::Draw(DD);
+	CMOGO::Draw(DD);
 }
 
-void Boid::aquireTarget(vector<Boid*> boidVector)
-{
-	Boid* target = nullptr;
-	float distance;
-	for (vector<Boid*>::iterator it = boidVector.begin(); it != boidVector.end(); ++it)
-	{
-		Boid* currentBoid = (*it);
-		if (m_type > currentBoid->getType() && currentBoid->getType() != BoidType::BOID_OBSTACLE)
-		{
-			if (target == nullptr)
-			{
-				distance = (currentBoid->GetPos() - m_pos).Length();
-				target = currentBoid;
-			}
-			else
-			{
-				if ((currentBoid->GetPos() - m_pos).Length() < distance)
-				{
-					target = currentBoid;
-				}
-			}
-		}
-	}
-	m_target = target;
-}

@@ -21,6 +21,7 @@ public:
 	void spawnBoid(BoidType type);
 	void killBoid(BoidType type);
 	void killBoid(Boid* target);
+	void aquireTarget(Boid* pred);
 	Boid* closestPrey(Boid* _pred);
 private:
 	vector<Boid*> myBoids;

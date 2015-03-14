@@ -18,14 +18,42 @@ boidManager::~boidManager()
 
 }
 
+
+void boidManager::aquireTarget(Boid* predator)
+{
+	Boid* target = nullptr;
+	float distance;
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
+	{
+		Boid* currentBoid = (*it);
+		if (predator->getType() > currentBoid->getType() && currentBoid->getType() != BoidType::BOID_OBSTACLE)
+		{
+			if (target == nullptr)
+			{
+				distance = (currentBoid->GetPos() - m_pos).Length();
+				target = currentBoid;
+			}
+			else
+			{
+				if ((currentBoid->GetPos() - m_pos).Length() < distance)
+				{
+					target = currentBoid;
+				}
+			}
+		}
+	}
+	predator->setTarget(target);
+}
+
 void boidManager::spawnBoid(BoidType type)
 {
-	Boid* newBoid = new Boid("roach.cmo", GameData::p3d, GameData::EF);
+	Boid* newBoid = new Boid("roach.cmo");
+	newBoid->SetScale(1.0f);
 	if (type == BoidType::BOID_PREDATOR)
 	{
-		newBoid = new Boid("table.cmo", GameData::p3d, GameData::EF);
-		newBoid->SetScale(0.2f);
-		newBoid->aquireTarget(myBoids);
+		newBoid = new Boid("frog.cmo");
+		newBoid->SetScale(1.0f);
+		aquireTarget(newBoid);
 	}
 	else
 	{
@@ -33,7 +61,8 @@ void boidManager::spawnBoid(BoidType type)
 		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 		float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 		float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
-		newBoid->setDirection(Vector3(r1, r2, r3));
+		newBoid->setDirection(Vector3(r1, 0.0f, r2));
+		newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
 		newBoid->setSpeed(r4);
 	}
 	newBoid->setType(type);
@@ -47,13 +76,14 @@ void boidManager::Tick(GameData* GD)
 		Boid* currentBoid = (*it);
 		Vector3 avDir;
 		Vector3 avPos;
+		bool overrideModifier = false;
 		int count = 0;
 		Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
 		if (currentBoid->getType() == BOID_PREDATOR)
 		{
 			if (currentBoid->getTarget() == nullptr)
 			{
-				currentBoid->aquireTarget(myBoids);
+				aquireTarget(currentBoid);
 			}
 		}
 		else
@@ -61,34 +91,42 @@ void boidManager::Tick(GameData* GD)
 			for (vector<Boid*>::iterator it2 = it; it2 != myBoids.end(); ++it2)
 			{
 				Boid* newBoid = (*it2);
+				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
+				//currentBoid.type = prey | newBoid.type = predator
 				if (currentBoid->getType() < newBoid->getType())
 				{
-					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < SimulationParameters::boidSight)
+					if (dist < SimulationParameters::boidSight)
 					{
 						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
-						fearModifier.Normalize();
-						modifier += fearModifier;
+						if (!overrideModifier)
+						{
+							modifier = fearModifier;
+							overrideModifier;
+						}
 					}
 				}
+				//currentBoid.type == newBoid.type 
 				else if (currentBoid->getType() == newBoid->getType())
 				{
-					float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
+					
 					if (dist < 20.0f)
 					{
 						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						contactModifier *= (dist / 20.0f);
-						contactModifier.Normalize();
-						modifier += contactModifier;
-					}
-					else
-					{
-						if (dist < SimulationParameters::groupDistance)
+						if (!overrideModifier)
 						{
-							avDir += newBoid->getDirection();
-							avPos += newBoid->GetPos();
-							count++;
+							modifier = contactModifier;
+							overrideModifier;
 						}
 					}
+				}
+				if (dist < SimulationParameters::groupDistance  && currentBoid->getType() == newBoid->getType())
+				{
+					if (dist > SimulationParameters::groupDistance * 0.7f){
+						avPos += newBoid->GetPos();
+					}
+					avDir += newBoid->getDirection();
+					count++;
 				}
 			}
 		}
@@ -96,12 +134,15 @@ void boidManager::Tick(GameData* GD)
 		{
 			avDir /= count;
 			avPos /= count;
-			Vector3 toAverage = avPos - m_pos;
-			toAverage.Normalize();
-			avDir.Normalize();
-			Vector3 groupModifier = (avDir * 0.5f) + (toAverage * 0.5f);
-			modifier += groupModifier;
+			Vector3 toAverage = currentBoid->GetPos() - avPos;
+			if (!overrideModifier)
+			{
+				currentBoid->setSpeed(SimulationParameters::boidMaxSpeed * ((avPos - currentBoid->GetPos()).Length() / SimulationParameters::groupDistance));
+				modifier += (toAverage * SimulationParameters::groupStrength);
+				modifier += (avDir * SimulationParameters::groupHeading);
+			}
 		}
+		//Tick if Boid is alive
 		if (currentBoid->isAlive())
 		{
 			currentBoid->Tick(GD, modifier);
@@ -111,7 +152,6 @@ void boidManager::Tick(GameData* GD)
 		{
 			it = myBoids.erase(it);
 		}
-		
 	}
 	GameObject::Tick(GD);
 }

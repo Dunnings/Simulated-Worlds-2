@@ -67,6 +67,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <MeshContentTask Include="frog.FBX" />
+    <MeshContentTask Include="roach.FBX" />
     <MeshContentTask Include="table.FBX" />
     <MeshContentTask Include="treasure_chest.FBX" />
   </ItemGroup>

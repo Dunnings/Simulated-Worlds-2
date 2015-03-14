@@ -63,14 +63,14 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->EF = m_myEF;
 
 	SimulationParameters para;
-	para.groupStrength = 80.0f;
-	para.groupDistance = 200.0f;
-	para.groupHeading = 10.0f;
+	para.groupStrength = 0.5f;
+	para.groupDistance = 300.0f;
+	para.groupHeading = 0.4f;
 	para.boidSight = 100.0f;
-	para.boidMaxSpeed = 50.0f;
-	para.boidFearBoost = 20.0f;
-	para.restTime = 1000.0f;
-	para.mapSize = 800.0f;
+	para.boidMaxSpeed = 20.0f;
+	para.boidFearBoost = 0.0f;
+	para.restTime = 800.0f;
+	para.mapSize = 500.0f;
 
 	boidManager* boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
