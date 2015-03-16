@@ -6,11 +6,17 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10; i++)
 	{
-		spawnBoid(BOID_PREY);
+		spawnBoid(BOID_PREY, 1);
 	}
-	spawnBoid(BOID_PREDATOR);
+	for (int i = 0; i < 20; i++)
+	{
+		spawnBoid(BOID_PREY, 2);
+	}for (int i = 0; i < 30; i++)
+	{
+		spawnBoid(BOID_PREY, 3);
+	}
 }
 
 boidManager::~boidManager()
@@ -22,49 +28,35 @@ boidManager::~boidManager()
 void boidManager::aquireTarget(Boid* predator)
 {
 	Boid* target = nullptr;
-	float distance;
+	float distance = SimulationParameters::boidSight;
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
 		Boid* currentBoid = (*it);
-		if (predator->getType() > currentBoid->getType() && currentBoid->getType() != BoidType::BOID_OBSTACLE)
+		if (predator->getLevel() > currentBoid->getLevel() && currentBoid->getType() != BOID_OBSTACLE)
 		{
-			if (target == nullptr)
+			if ((currentBoid->GetPos() - predator->GetPos()).Length() < distance)
 			{
-				distance = (currentBoid->GetPos() - m_pos).Length();
 				target = currentBoid;
-			}
-			else
-			{
-				if ((currentBoid->GetPos() - m_pos).Length() < distance)
-				{
-					target = currentBoid;
-				}
+				distance = (currentBoid->GetPos() - predator->GetPos()).Length();
 			}
 		}
 	}
 	predator->setTarget(target);
 }
 
-void boidManager::spawnBoid(BoidType type)
+void boidManager::spawnBoid(BoidType type, int level)
 {
 	Boid* newBoid = new Boid("roach.cmo");
-	newBoid->SetScale(1.0f);
-	if (type == BoidType::BOID_PREDATOR)
-	{
-		newBoid = new Boid("frog.cmo");
-		newBoid->SetScale(1.0f);
-		aquireTarget(newBoid);
-	}
-	else
-	{
-		float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-		float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-		float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
-		newBoid->setDirection(Vector3(r1, 0.0f, r2));
-		newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
-		newBoid->setSpeed(r4);
-	}
+	SetScale(1.0f + (level * 0.05));
+	float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+	float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+	float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
+	newBoid->setLevel(level);
+	aquireTarget(newBoid);
+	newBoid->setDirection(Vector3(r1, 0.0f, r2));
+	newBoid->setSpeed(r4);
+	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
 	newBoid->setType(type);
 	myBoids.push_back(newBoid);
 }
@@ -79,12 +71,10 @@ void boidManager::Tick(GameData* GD)
 		bool overrideModifier = false;
 		int count = 0;
 		Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
-		if (currentBoid->getType() == BOID_PREDATOR)
+		
+		if (currentBoid->getTarget() == nullptr)
 		{
-			if (currentBoid->getTarget() == nullptr)
-			{
-				aquireTarget(currentBoid);
-			}
+			aquireTarget(currentBoid);
 		}
 		else
 		{
@@ -101,6 +91,7 @@ void boidManager::Tick(GameData* GD)
 						if (!overrideModifier)
 						{
 							modifier = fearModifier;
+							currentBoid->setSpeed(SimulationParameters::boidMaxSpeed);
 							overrideModifier;
 						}
 					}
@@ -145,7 +136,9 @@ void boidManager::Tick(GameData* GD)
 		//Tick if Boid is alive
 		if (currentBoid->isAlive())
 		{
-			currentBoid->Tick(GD, modifier);
+			modifier.Normalize();
+			currentBoid->setDirection(currentBoid->getDirection() + modifier);
+			currentBoid->Tick(GD);
 			++it;
 		}
 		else

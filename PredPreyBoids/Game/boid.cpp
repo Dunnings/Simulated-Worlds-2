@@ -13,9 +13,8 @@ Boid::~Boid()
 
 }
 
-void Boid::Tick(GameData* GD, Vector3 modifier)
+void Boid::Tick(GameData* GD)
 {
-	modifier.Normalize();
 	m_direction.y = 0.0f;
 	//If the boid has a target set direction to aim at that target and go toward it
 	if (m_target != nullptr)
@@ -25,13 +24,16 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 		m_direction = dir;
 		m_speed = SimulationParameters::boidMaxSpeed;
 		m_speed *= 1.5f;
-		m_speed += 0.02f * (m_target->GetPos() - m_pos).Length();
+		m_speed += 0.05f * (m_target->GetPos() - m_pos).Length();
 		if ((m_target->GetPos() - m_pos).Length() < 5.0f)
 		{
 			m_target->Damage(100.0f);
 			if (!m_target->isAlive())
 			{
 				m_target = nullptr;
+				m_level += 1;
+				float scale = 1.0f + (m_level * 0.05);
+				SetScale(scale);
 			}
 		}
 		m_direction.Normalize();
@@ -46,8 +48,6 @@ void Boid::Tick(GameData* GD, Vector3 modifier)
 			m_direction += centerModifier;
 		}
 		//Modify m_pos
-		modifier.Normalize();
-		m_direction += modifier;
 		m_direction.Normalize();
 		m_pos += m_direction * m_speed * GD->dt;
 	}

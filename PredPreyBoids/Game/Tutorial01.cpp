@@ -124,8 +124,10 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 
     // Create window
     g_hInst = hInstance;
-    RECT rc = { 0, 0, 800, 600 };
-    AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
+	RECT rc;
+	const HWND hDesktop = GetDesktopWindow();
+	GetWindowRect(hDesktop, &rc);
+	AdjustWindowRect(&rc, WS_CHILDWINDOW, FALSE);
 	//SS Chnaged Window name
     g_hWnd = CreateWindow( L"TutorialWindowClass", L"GEA TUTS PROJECT", WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,

@@ -13,7 +13,7 @@ public:
 	Boid(string _fileName);
 	~Boid();
 
-	virtual void Tick(GameData* GD, Vector3 modifier);
+	virtual void Tick(GameData* GD);
 	virtual void Draw(DrawData* DD);
 	void setSpeed(float speed) { m_speed = speed; };
 	float getSpeed() { return m_speed; };
@@ -25,8 +25,12 @@ public:
 	void setTarget(Boid* t) { m_target = t; };
 	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
 	bool isAlive() { return m_alive; };
+	void levelUp(){ ++m_level; };
+	void setLevel(int level){ m_level = level; };
+	int getLevel(){ return m_level; };
 protected:
 	BoidType m_type;
+	int m_level;
 	BoidState m_state;
 	Boid* m_target = nullptr;
 	Vector3 m_direction;
