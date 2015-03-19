@@ -3,8 +3,8 @@
   <ItemGroup>
     <MeshContentTask Include="table.FBX" />
     <MeshContentTask Include="treasure_chest.FBX" />
-    <MeshContentTask Include="frog.FBX" />
     <MeshContentTask Include="roach.FBX" />
+    <MeshContentTask Include="crab.FBX" />
   </ItemGroup>
   <ItemGroup>
     <ImageContentTask Include="grass.jpg" />

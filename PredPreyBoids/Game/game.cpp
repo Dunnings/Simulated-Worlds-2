@@ -16,7 +16,6 @@ using namespace DirectX;
 extern HWND g_hWnd;
 
 float SimulationParameters::boidMaxSpeed;
-float SimulationParameters::boidSight;
 float SimulationParameters::groupDistance;
 float SimulationParameters::groupHeading;
 float SimulationParameters::groupStrength;
@@ -66,11 +65,10 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.groupStrength = 0.5f;
 	para.groupDistance = 300.0f;
 	para.groupHeading = 0.4f;
-	para.boidSight = 100.0f;
 	para.boidMaxSpeed = 20.0f;
 	para.boidFearBoost = 0.0f;
 	para.restTime = 800.0f;
-	para.mapSize = 500.0f;
+	para.mapSize = 400.0f;
 
 	boidManager* boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);

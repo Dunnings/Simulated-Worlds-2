@@ -21,7 +21,6 @@ struct SimulationParameters
 	static float groupStrength;
 	static float groupDistance;
 	static float groupHeading;
-	static float boidSight;
 	static float boidMaxSpeed;
 	static float restTime;
 	static float mapSize;
@@ -36,8 +35,8 @@ enum BoidState
 enum BoidType
 {
 	BOID_OBSTACLE,
-	BOID_PREY,
-	BOID_PREDATOR
+	BOID_ROACH,
+	BOID_CRAB
 };
 
 #endif
