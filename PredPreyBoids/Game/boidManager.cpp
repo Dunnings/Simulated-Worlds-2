@@ -6,13 +6,14 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	for (int i = 0; i < 100; i++)
-	{
-		spawnBoid(BOID_ROACH);
-	}
 	for (int i = 0; i < 20; i++)
 	{
-		spawnBoid(BOID_CRAB);
+		spawnBoid(BOID_OBSTACLE)->SetPos(Vector3(i*10.0f, 0.0f, 0.0f));
+
+	}
+	for (int i = 0; i < 200; i++)
+	{
+		spawnBoid(BOID_ROACH);
 	}
 }
 
@@ -41,10 +42,14 @@ void boidManager::aquireTarget(Boid* predator)
 	predator->setTarget(target);
 }
 
-void boidManager::spawnBoid(BoidType type)
+Boid* boidManager::spawnBoid(BoidType type)
 {
 	Boid* newBoid;
-	if (type == BOID_CRAB)
+	if (type == BOID_OBSTACLE)
+	{
+		newBoid = new Boid("treasure_chest.cmo");
+	}
+	else if (type == BOID_CRAB)
 	{
 		newBoid = new Boid("crab.cmo");
 		newBoid->setSight(200.0f);
@@ -64,6 +69,7 @@ void boidManager::spawnBoid(BoidType type)
 	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
 	newBoid->setType(type);
 	myBoids.push_back(newBoid);
+	return newBoid;
 }
 
 void boidManager::Tick(GameData* GD)
@@ -72,6 +78,7 @@ void boidManager::Tick(GameData* GD)
 	{
 		Boid* currentBoid = (*it);
 		Vector3 avDir;
+		float avSpeed = 0.0f;
 		Vector3 avPos;
 		bool overrideModifier = false;
 		int count = 0;
@@ -85,67 +92,77 @@ void boidManager::Tick(GameData* GD)
 			}
 		}
 
-		for (vector<Boid*>::iterator it2 = it; it2 != myBoids.end(); ++it2)
+		for (vector<Boid*>::iterator it2 = myBoids.begin(); it2 != myBoids.end(); ++it2)
 		{
 			Boid* newBoid = (*it2);
 			float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
+			//Obstacle
+			if (newBoid->getType() == BOID_OBSTACLE){
+				if (dist < 20.0f)
+				{
+					Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
+					contactModifier.Normalize();
+					currentBoid->setDirection(contactModifier);
+					overrideModifier = true;
+					break;
+				}
+			}
 			//currentBoid.type = prey | newBoid.type = predator
-			if (currentBoid->getType() < newBoid->getType())
+			else if (currentBoid->getType() < newBoid->getType())
 			{
 				if (dist < currentBoid->getSight())
 				{
 					Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
-					if (!overrideModifier)
-					{
-						modifier = fearModifier;
-						currentBoid->setSpeed(SimulationParameters::boidMaxSpeed);
-						overrideModifier;
-					}
+					modifier = fearModifier;
+					currentBoid->setSpeed(currentBoid->getMaxSpeed());
 				}
 			}
 			//currentBoid.type == newBoid.type 
 			else if (currentBoid->getType() == newBoid->getType())
 			{
-				if (dist < (currentBoid->GetScale().x + (currentBoid->GetScale().y + currentBoid->GetScale().z) / 3) + 20.0f)
+				if (dist < 20.0f)
 				{
 					Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
-					contactModifier *= (dist / 20.0f);
-					if (!overrideModifier)
-					{
-						modifier = contactModifier;
-						overrideModifier;
-					}
+					contactModifier.Normalize();
+					modifier = contactModifier;
+					overrideModifier = true;
+					break;
+				}
+
+				if (dist < SimulationParameters::groupDistance)
+				{
+					avPos += newBoid->GetPos();
+					avDir += newBoid->getDirection();
+					avSpeed += newBoid->getSpeed();
+					count++;
 				}
 			}
-			if (dist < SimulationParameters::groupDistance && currentBoid->getType() == newBoid->getType())
-			{
-				avPos += newBoid->GetPos();
-				avDir += newBoid->getDirection();
-				count++;
-			}
 		}
-		if (count > 0)
+
+
+		if (count > 0 && !overrideModifier)
 		{
 			avDir /= static_cast<float>(count);
 			avPos /= static_cast<float>(count);
+			avSpeed /= static_cast<float>(count);
 			Vector3 toAverage = currentBoid->GetPos() - avPos;
-			if (!overrideModifier)
-			{
-				modifier += (toAverage * SimulationParameters::groupStrength);
-				modifier += (avDir * SimulationParameters::groupHeading);
-			}
-			//Tick if Boid is alive
-			if (currentBoid->isAlive())
-			{
-				modifier.Normalize();
-				currentBoid->setDirection(currentBoid->getDirection() + modifier);
-				currentBoid->Tick(GD);
-				++it;
-			}
-			else
-			{
-				it = myBoids.erase(it);
-			}
+			modifier.Normalize();
+			modifier += (toAverage * SimulationParameters::groupStrength);
+			modifier += (avDir * SimulationParameters::groupHeading);
+			currentBoid->setSpeed(avSpeed);
+		}
+
+		//Tick if Boid is alive
+		if (currentBoid->isAlive())
+		{
+			modifier.Normalize();
+			currentBoid->setDirection(currentBoid->getDirection() + modifier);
+			currentBoid->Tick(GD);
+			++it;
+		}
+		else
+		{
+			it = myBoids.erase(it);
 		}
 	}
 	GameObject::Tick(GD);
@@ -155,7 +172,6 @@ void boidManager::Draw(DrawData* DD)
 {
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); ++it)
 	{
-		Boid* currentBoid = (*it);
-		currentBoid->Draw(DD);
+		(*it)->Draw(DD);
 	}
 }

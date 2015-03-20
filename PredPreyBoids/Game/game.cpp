@@ -22,6 +22,7 @@ float SimulationParameters::groupStrength;
 float SimulationParameters::restTime;
 float SimulationParameters::mapSize;
 float SimulationParameters::boidFearBoost;
+float SimulationParameters::starvationTime;
 
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
 {
@@ -62,13 +63,14 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->EF = m_myEF;
 
 	SimulationParameters para;
-	para.groupStrength = 0.5f;
-	para.groupDistance = 300.0f;
-	para.groupHeading = 0.4f;
+	para.groupStrength = 2.00f;
+	para.groupDistance = 200.0f;
+	para.groupHeading = 0.6f;
 	para.boidMaxSpeed = 20.0f;
 	para.boidFearBoost = 0.0f;
 	para.restTime = 800.0f;
 	para.mapSize = 400.0f;
+	para.starvationTime = 5000.0f;
 
 	boidManager* boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);

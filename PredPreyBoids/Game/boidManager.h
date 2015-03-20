@@ -18,7 +18,7 @@ public:
 
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
-	void spawnBoid(BoidType type);
+	Boid* spawnBoid(BoidType type);
 	void killBoid(BoidType type);
 	void killBoid(Boid* target);
 	void aquireTarget(Boid* pred);

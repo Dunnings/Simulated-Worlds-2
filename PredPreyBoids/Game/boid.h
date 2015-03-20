@@ -18,6 +18,7 @@ public:
 	void setSpeed(float speed) { m_speed = speed; };
 	void setMaxSpeed(float speed) { max_speed = speed; };
 	float getSpeed() { return m_speed; };
+	float getMaxSpeed() { return max_speed; };
 	void setSight(float sight) { m_sight = sight; };
 	float getSight() { return m_sight; };
 	void setDirection(Vector3 dir) { m_direction = dir; };
@@ -32,6 +33,8 @@ public:
 	void setKills(int level){ m_weight = level; };
 	int getKills(){ return m_weight; };
 	Vector3 GetScale() { return m_scale; };
+	void Eat();
+	void Starve();
 protected:
 	BoidType m_type;
 	int m_weight = 0;
@@ -44,6 +47,7 @@ protected:
 	float max_speed = 0.0f;
 	float m_sight = 100.0f;
 	float smooth_yaw = 0.0f;
+	ULONGLONG lastKillTickCount;
 
 };
 

@@ -25,6 +25,7 @@ struct SimulationParameters
 	static float restTime;
 	static float mapSize;
 	static float boidFearBoost;
+	static float starvationTime;
 };
 
 enum BoidState
