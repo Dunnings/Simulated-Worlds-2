@@ -4,7 +4,7 @@ using namespace std;
 
 GameObject::GameObject()
 {
-	//set the Gameobject to the origin with no rotation and unit scaling 
+	//Set the Gameobject to the origin with no rotation and unit scaling 
 	m_pos = Vector3::Zero;
 	m_pitch = 0.0f;
 	m_yaw = 0.0f;

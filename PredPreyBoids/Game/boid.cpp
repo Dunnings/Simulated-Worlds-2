@@ -30,47 +30,14 @@ void Boid::Starve(){
 void Boid::Tick(GameData* GD)
 {
 	if (m_type != BOID_OBSTACLE){
+		//Starvation
 		if (m_weight > 0){
 			if (GetTickCount64() - lastKillTickCount > SimulationParameters::starvationTime){
 				Starve();
 				lastKillTickCount = GetTickCount64();
 			}
 		}
-
 		m_direction.y = 0.0f;
-		//If the boid has a target set direction to aim at that target and go toward it ignoring modifier
-		if (m_target != nullptr)
-		{
-			if (m_target->isAlive())
-			{
-				Vector3 dir = m_target->GetPos() - m_pos;
-				dir.Normalize();
-				m_direction = dir;
-				m_speed = max_speed - (m_weight * 3.0f);
-				if ((m_target->GetPos() - m_pos).Length() < 5.0f)
-				{
-					m_target->Damage(100.0f);
-					if (!m_target->isAlive())
-					{
-
-						m_target = nullptr;
-						Eat();
-						lastKillTickCount = GetTickCount64();
-					}
-				}
-			}
-
-		}
-		else
-		{
-			float distanceFromCentre = ((Vector3(0.0f, 0.0f, 0.0f) - m_pos)).Length();
-			if (distanceFromCentre > (SimulationParameters::mapSize / 2))
-			{
-			Vector3 centerModifier = (Vector3(0.0f, 0.0f, 0.0f) - m_pos);
-			centerModifier.Normalize();
-			m_direction += centerModifier * (distanceFromCentre / 500.0f);
-			}
-		}
 		//Point in direction of travel
 		m_direction.Normalize();
 		m_pos += m_direction * m_speed * GD->dt;

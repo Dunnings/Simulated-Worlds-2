@@ -10,7 +10,7 @@ void VBCube::init(int _size, ID3D11Device* GD)
 	m_vertices = new myVertex[numVerts];
 	WORD* indices = new WORD[numVerts];
 
-	//as using the standard VB shader set the tex-coords somewhere safe
+	//as using the standard VB shader Set the tex-coords somewhere safe
 	for (int i = 0; i<numVerts; i++)
 	{
 		indices[i] = i;

@@ -32,7 +32,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_pKeyboard = nullptr;
 	m_pDirectInput = nullptr;
 
-	//set up DirectXTK Effects system
+	//Set up DirectXTK Effects system
 	m_myEF  = new MyEffectFactory(_pd3dDevice);
 #if DEBUG
 	m_myEF->SetPath(L"Debug\\");

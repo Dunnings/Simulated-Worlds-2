@@ -15,6 +15,10 @@ boidManager::boidManager()
 	{
 		spawnBoid(BOID_ROACH);
 	}
+	for (int i = 0; i < 10; i++)
+	{
+		spawnBoid(BOID_CRAB);
+	}
 }
 
 boidManager::~boidManager()
@@ -39,7 +43,7 @@ void boidManager::aquireTarget(Boid* predator)
 			}
 		}
 	}
-	predator->setTarget(target);
+	predator->SetTarget(target);
 }
 
 Boid* boidManager::spawnBoid(BoidType type)
@@ -52,22 +56,22 @@ Boid* boidManager::spawnBoid(BoidType type)
 	else if (type == BOID_CRAB)
 	{
 		newBoid = new Boid("crab.cmo");
-		newBoid->setSight(200.0f);
+		newBoid->SetSight(200.0f);
 	}
 	else
 	{
 		newBoid = new Boid("roach.cmo");
 	}
-	newBoid->setMaxSpeed(SimulationParameters::boidMaxSpeed * type);
+	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
 	float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
 	aquireTarget(newBoid);
-	newBoid->setDirection(Vector3(r1, 0.0f, r2));
-	newBoid->setSpeed(r4);
+	newBoid->SetDirection(Vector3(r1, 0.0f, r2));
+	newBoid->SetSpeed(r4);
 	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
-	newBoid->setType(type);
+	newBoid->SetType(type);
 	myBoids.push_back(newBoid);
 	return newBoid;
 }
@@ -86,23 +90,47 @@ void boidManager::Tick(GameData* GD)
 
 		if (currentBoid->getType() > 1)
 		{
-			if (currentBoid->getTarget() == nullptr)
+			if (currentBoid->getTarget() != nullptr)
 			{
+				if (currentBoid->getTarget()->isAlive()){
+					Vector3 dir = currentBoid->getTarget()->GetPos() - currentBoid->GetPos();
+					dir.Normalize();
+					currentBoid->SetDirection(dir);
+					currentBoid->SetSpeed(currentBoid->getMaxSpeed() - (currentBoid->getWeight() * 3.0f));
+
+					if ((currentBoid->getTarget()->GetPos() - currentBoid->GetPos()).Length() < 5.0f)
+					{
+						currentBoid->getTarget()->Damage(100.0f);
+						if (!currentBoid->getTarget()->isAlive())
+						{
+							currentBoid->SetTarget(nullptr);
+							currentBoid->Eat();
+							currentBoid->SetLastKillTickCount(GetTickCount64());
+						}
+					}
+				}
+				else{
+					aquireTarget(currentBoid);
+				}
+			}
+			else{
 				aquireTarget(currentBoid);
 			}
 		}
+
+		
 
 		for (vector<Boid*>::iterator it2 = myBoids.begin(); it2 != myBoids.end(); ++it2)
 		{
 			Boid* newBoid = (*it2);
 			float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
-			//Obstacle
+			// Bumping into OBSTACLE
 			if (newBoid->getType() == BOID_OBSTACLE){
 				if (dist < 20.0f)
 				{
 					Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 					contactModifier.Normalize();
-					currentBoid->setDirection(contactModifier);
+					currentBoid->SetDirection(contactModifier);
 					overrideModifier = true;
 					break;
 				}
@@ -114,7 +142,7 @@ void boidManager::Tick(GameData* GD)
 				{
 					Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
 					modifier = fearModifier;
-					currentBoid->setSpeed(currentBoid->getMaxSpeed());
+					currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 				}
 			}
 			//currentBoid.type == newBoid.type 
@@ -137,6 +165,10 @@ void boidManager::Tick(GameData* GD)
 					count++;
 				}
 			}
+			//Predator Hunting Prey
+			else if (currentBoid->getType() > newBoid->getType()){
+
+			}
 		}
 
 
@@ -149,14 +181,21 @@ void boidManager::Tick(GameData* GD)
 			modifier.Normalize();
 			modifier += (toAverage * SimulationParameters::groupStrength);
 			modifier += (avDir * SimulationParameters::groupHeading);
-			currentBoid->setSpeed(avSpeed);
+			currentBoid->SetSpeed(avSpeed);
 		}
 
 		//Tick if Boid is alive
 		if (currentBoid->isAlive())
 		{
 			modifier.Normalize();
-			currentBoid->setDirection(currentBoid->getDirection() + modifier);
+			Vector3 centerModifier = Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos();
+			if (centerModifier.Length() > (SimulationParameters::mapSize / 2))
+			{
+				centerModifier.Normalize();
+				modifier += centerModifier * (centerModifier.Length() / 500.0f);
+			}
+
+			currentBoid->SetDirection(currentBoid->getDirection() + modifier);
 			currentBoid->Tick(GD);
 			++it;
 		}

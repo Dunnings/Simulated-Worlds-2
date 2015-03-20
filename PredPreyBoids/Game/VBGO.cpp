@@ -9,7 +9,7 @@
 
 //the base Game Object drawn using a Vertex and Index Buffer
 //all of the main aspects of drawing it have a default which is pointed to by a static pointer
-//this is only used if the version for this object is not set to nullptr
+//this is only used if the version for this object is not Set to nullptr
 
 using namespace DirectX;
 
@@ -33,7 +33,7 @@ ID3D11RasterizerState*		VBGO::s_pRasterState = nullptr;
 
 VBGO::VBGO()
 {
-	//set up Buffers
+	//Set up Buffers
 	m_VertexBuffer = NULL;
 	m_IndexBuffer = NULL;
 	m_numPrims = 0;
@@ -76,18 +76,18 @@ void VBGO::Tick(GameData* _GD)
 
 void VBGO::Draw(DrawData* _DD)
 {
-	//set raster state
+	//Set raster state
 	ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
 	_DD->pd3dImmediateContext->RSSetState(useRasterS);
 
-	//set standard Constant Buffer to match this object
+	//Set standard Constant Buffer to match this object
 	s_pCB->world = m_worldMat.Transpose();
 	s_pCB->rot = m_rotMat.Transpose();
 
 	//Set vertex buffer
 	UINT stride = sizeof(myVertex);
-	UINT offset = 0;
-	_DD->pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &stride, &offset);
+	UINT offSet = 0;
+	_DD->pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &stride, &offSet);
 
 	// Set index buffer
 	_DD->pd3dImmediateContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -100,29 +100,29 @@ void VBGO::Draw(DrawData* _DD)
 	_DD->pd3dImmediateContext->VSSetConstantBuffers(0, 1, &useCB);
 	_DD->pd3dImmediateContext->PSSetConstantBuffers(0, 1, &useCB);
 
-	//unless it has it own set them to the static defaults
+	//unless it has it own Set them to the static defaults
 
-	//set primitive type used
+	//Set primitive type used
 	_DD->pd3dImmediateContext->IASetPrimitiveTopology(m_topology);
 
-	//set  vertex layout
-	//note that if you do use this you'll need to change the stride and offset above
+	//Set  vertex layout
+	//note that if you do use this you'll need to change the stride and offSet above
 	ID3D11InputLayout* useLayout = m_pVertexLayout ? m_pVertexLayout : s_pVertexLayout; 
 	_DD->pd3dImmediateContext->IASetInputLayout(useLayout);
 
-	//set Vertex Shader
+	//Set Vertex Shader
 	ID3D11VertexShader* useVS = m_pVertexShader ? m_pVertexShader : s_pVertexShader;
 	_DD->pd3dImmediateContext->VSSetShader(useVS, NULL, 0);
 
-	//set Pixel Shader
+	//Set Pixel Shader
 	ID3D11PixelShader* usePS = m_pPixelShader ? m_pPixelShader : s_pPixelShader;
 	_DD->pd3dImmediateContext->PSSetShader(usePS, NULL, 0);
 
-	//set Texture
-	ID3D11ShaderResourceView* useTex = m_pTextureRV ? m_pTextureRV : s_pTextureRV;
-	_DD->pd3dImmediateContext->PSSetShaderResources(0, 1, &useTex);
+	//Set Texture
+	ID3D11ShaderResourceView* uSetex = m_pTextureRV ? m_pTextureRV : s_pTextureRV;
+	_DD->pd3dImmediateContext->PSSetShaderResources(0, 1, &uSetex);
 
-	//set sampler
+	//Set sampler
 	ID3D11SamplerState* useSample = m_pSampler ? m_pSampler : s_pSampler;
 	_DD->pd3dImmediateContext->PSSetSamplers(0, 1, &useSample);
 
@@ -161,16 +161,16 @@ HRESULT CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szS
 
 void VBGO::Init(ID3D11Device* _GD)
 {
-	//set up all static stuff
+	//Set up all static stuff
 
 	//default vertex shader
 	ID3DBlob* pVertexShaderBuffer = NULL;
-	HRESULT hr = CompileShaderFromFile(L"../Assets/shader.fx", "VS", "vs_4_0_level_9_1", &pVertexShaderBuffer);
+	HRESULT hr = CompileShaderFromFile(L"../AsSets/shader.fx", "VS", "vs_4_0_level_9_1", &pVertexShaderBuffer);
 	_GD->CreateVertexShader(pVertexShaderBuffer->GetBufferPointer(), pVertexShaderBuffer->GetBufferSize(), NULL, &s_pVertexShader);
 
 	//default pixelshader
 	ID3DBlob* pPixelShaderBuffer = NULL;
-	hr = CompileShaderFromFile(L"../Assets/shader.fx", "PS", "ps_4_0_level_9_1", &pPixelShaderBuffer);
+	hr = CompileShaderFromFile(L"../AsSets/shader.fx", "PS", "ps_4_0_level_9_1", &pPixelShaderBuffer);
 	_GD->CreatePixelShader(pPixelShaderBuffer->GetBufferPointer(), pPixelShaderBuffer->GetBufferSize(), NULL, &s_pPixelShader);
 
 	//default vertex layout

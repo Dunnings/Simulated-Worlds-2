@@ -28,7 +28,7 @@ Snail::Snail(ID3D11Device* _GD, std::string _filename, int _sections, float _sca
 	myVertex* vertices = new myVertex[numVerts];
 	WORD* indices = new WORD[numVerts];
 
-	//as using the standard VB shader set the tex-coords somewhere safe
+	//as using the standard VB shader Set the tex-coords somewhere safe
 	for (int i = 0; i<numVerts; i++)
 	{
 		indices[i] = i;
@@ -39,14 +39,14 @@ Snail::Snail(ID3D11Device* _GD, std::string _filename, int _sections, float _sca
 	Matrix rotTrans = Matrix::CreateRotationY(_rot);
 	Matrix stepTrans = Matrix::CreateTranslation(0.0f, _step, 0.0f);
 	Matrix scaleTrans = Matrix::CreateScale(_scale);
-	Matrix baseTrans = scaleTrans *rotTrans * stepTrans;
+	Matrix baSetrans = scaleTrans *rotTrans * stepTrans;
 
 	//build array of transforms to rotate,scale and translate baseline around the shell
 	Matrix* transforms = new Matrix[_sections];
 	transforms[0] = Matrix::Identity;
 	for (int i = 1; i < _sections; i++)
 	{
-		transforms[i] = transforms[i - 1] * baseTrans;
+		transforms[i] = transforms[i - 1] * baSetrans;
 	}
 
 	//build the vertices using these transforms and the line
@@ -120,7 +120,7 @@ Snail::Snail(ID3D11Device* _GD, std::string _filename, int _sections, float _sca
 
 	//Setup Raster State
 	//we need to see both side of the shell if its empty
-	//so set rasterDesc.CullMode = D3D11_CULL_NONE; 
+	//so Set rasterDesc.CullMode = D3D11_CULL_NONE; 
 	//probably don't need that once a snail is in there
 	//lighting is also a little off and in that case will also need either two render passes 
 	//or a two sided shader

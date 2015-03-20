@@ -69,7 +69,7 @@ void CMOGO::Draw(DrawData* _DD)
 		m_worldMat, //world transform to poisiton this model in the world
 		_DD->cam->GetView(), _DD->cam->GetProj(), //veiw and projection matrix of the camera
 		false, //NO! I don't want wireframe blocked by the raster state anyhow
-		[&](){_DD->pd3dImmediateContext->RSSetState(s_pRasterState);} //this VERY weird construction creates a function on the fly to set up the render states correctly else the model system overrides them BADLY
+		[&](){_DD->pd3dImmediateContext->RSSetState(s_pRasterState);} //this VERY weird construction creates a function on the fly to Set up the render states correctly else the model system overrides them BADLY
 		);
 
 	//...and put the depth stencil state back again

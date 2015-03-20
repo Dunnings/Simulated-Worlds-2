@@ -4,7 +4,7 @@
 #include "ConstantBuffer.h"
 //the base Game Object drawn using a Vertex and Index Buffer
 //all of the main aspects of drawing it have a default which is pointed to by a static pointer
-//this is only used if the version for this object is not set to nullptr
+//this is only used if the version for this object is not Set to nullptr
 class VBGO :public GameObject
 {
 public:

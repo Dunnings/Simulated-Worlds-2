@@ -15,24 +15,30 @@ public:
 
 	virtual void Tick(GameData* GD);
 	virtual void Draw(DrawData* DD);
-	void setSpeed(float speed) { m_speed = speed; };
-	void setMaxSpeed(float speed) { max_speed = speed; };
+	void SetSpeed(float speed) { m_speed = speed; };
+	void SetMaxSpeed(float speed) { max_speed = speed; };
+	void SetSight(float sight) { m_sight = sight; };
+	void SetDirection(Vector3 dir) { m_direction = dir; };
+	void SetType(BoidType type) { m_type = type; };
+	void SetTarget(Boid* t) { m_target = t; };
+	void SetKills(int level){ m_weight = level; };
+	void SetLastKillTickCount(ULONGLONG time){ lastKillTickCount = time; };
+	
+	
+	
 	float getSpeed() { return m_speed; };
 	float getMaxSpeed() { return max_speed; };
-	void setSight(float sight) { m_sight = sight; };
 	float getSight() { return m_sight; };
-	void setDirection(Vector3 dir) { m_direction = dir; };
 	Vector3 getDirection() { return m_direction; };
-	BoidType getType() { return m_type; };
-	void setType(BoidType type) { m_type = type; };
+	BoidType getType() { return m_type; };;
 	Boid* getTarget() { return m_target; };
-	void setTarget(Boid* t) { m_target = t; };
-	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
 	bool isAlive() { return m_alive; };
-	void incrementKills(){ ++m_weight; };
-	void setKills(int level){ m_weight = level; };
-	int getKills(){ return m_weight; };
+	int getWeight(){ return m_weight; };
 	Vector3 GetScale() { return m_scale; };
+
+
+	void incrementKills(){ ++m_weight; };
+	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
 	void Eat();
 	void Starve();
 protected:
