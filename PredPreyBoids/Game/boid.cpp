@@ -18,12 +18,14 @@ void Boid::Eat(){
 	m_scale.x += (m_weight * 0.05);
 	m_scale.y += (m_weight * 0.05);
 	m_scale.z += (m_weight * 0.05);
+	max_speed -= 2.0f;
 	m_weight++;
 }
 void Boid::Starve(){
 	m_scale.x -= (m_weight * 0.05);
 	m_scale.y -= (m_weight * 0.05);
 	m_scale.z -= (m_weight * 0.05);
+	max_speed += 2.0f;
 	m_weight--;
 }
 
@@ -34,6 +36,7 @@ void Boid::Tick(GameData* GD)
 		if (m_weight > 0){
 			if (GetTickCount64() - lastKillTickCount > SimulationParameters::starvationTime){
 				Starve();
+				m_weight--;
 				lastKillTickCount = GetTickCount64();
 			}
 		}

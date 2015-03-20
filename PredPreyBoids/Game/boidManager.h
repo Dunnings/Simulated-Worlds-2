@@ -25,6 +25,7 @@ public:
 	Boid* closestPrey(Boid* _pred);
 private:
 	vector<Boid*> myBoids;
+	Boid* cursor;
 };
 
 #endif

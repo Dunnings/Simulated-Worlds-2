@@ -6,16 +6,14 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	for (int i = 0; i < 20; i++)
-	{
-		spawnBoid(BOID_OBSTACLE)->SetPos(Vector3(i*10.0f, 0.0f, 0.0f));
-
-	}
+	cursor = spawnBoid(BOID_OBSTACLE);
+	cursor->SetSight(50.0f);
+	cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
 	for (int i = 0; i < 200; i++)
 	{
 		spawnBoid(BOID_ROACH);
 	}
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		spawnBoid(BOID_CRAB);
 	}
@@ -24,26 +22,6 @@ boidManager::boidManager()
 boidManager::~boidManager()
 {
 
-}
-
-
-void boidManager::aquireTarget(Boid* predator)
-{
-	Boid* target = nullptr;
-	float distance = predator->getSight();
-	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
-	{
-		Boid* currentBoid = (*it);
-		if (predator->getType() > currentBoid->getType() && currentBoid->getType() != BOID_OBSTACLE)
-		{
-			if ((currentBoid->GetPos() - predator->GetPos()).Length() < distance)
-			{
-				target = currentBoid;
-				distance = (currentBoid->GetPos() - predator->GetPos()).Length();
-			}
-		}
-	}
-	predator->SetTarget(target);
 }
 
 Boid* boidManager::spawnBoid(BoidType type)
@@ -67,7 +45,6 @@ Boid* boidManager::spawnBoid(BoidType type)
 	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
-	aquireTarget(newBoid);
 	newBoid->SetDirection(Vector3(r1, 0.0f, r2));
 	newBoid->SetSpeed(r4);
 	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
@@ -78,100 +55,102 @@ Boid* boidManager::spawnBoid(BoidType type)
 
 void boidManager::Tick(GameData* GD)
 {
+	// Cursor Position
+	if (GD->mouse->lX > 0) {
+			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
+	}
+	else if (GD->mouse->lX < 0){
+			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
+	}
+
+	if (GD->mouse->lY > 0){
+			cursor->SetPos(cursor->GetPos() + Vector3(0.0f, 0.0f, GD->mouse->lY / 2.0f));
+	}
+	else if (GD->mouse->lY < 0){
+			cursor->SetPos(cursor->GetPos() + Vector3(0.0f, 0.0f, GD->mouse->lY / 2.0f));
+	}
+
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
 		Boid* currentBoid = (*it);
 		Vector3 avDir;
 		float avSpeed = 0.0f;
 		Vector3 avPos;
+		int preyCount = 0;
 		bool overrideModifier = false;
 		int count = 0;
+		Vector3 targetHeading = Vector3(0.0f, 0.0f, 0.0f);
 		Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
-
-		if (currentBoid->getType() > 1)
-		{
-			if (currentBoid->getTarget() != nullptr)
-			{
-				if (currentBoid->getTarget()->isAlive()){
-					Vector3 dir = currentBoid->getTarget()->GetPos() - currentBoid->GetPos();
-					dir.Normalize();
-					currentBoid->SetDirection(dir);
-					currentBoid->SetSpeed(currentBoid->getMaxSpeed() - (currentBoid->getWeight() * 3.0f));
-
-					if ((currentBoid->getTarget()->GetPos() - currentBoid->GetPos()).Length() < 5.0f)
-					{
-						currentBoid->getTarget()->Damage(100.0f);
-						if (!currentBoid->getTarget()->isAlive())
-						{
-							currentBoid->SetTarget(nullptr);
-							currentBoid->Eat();
-							currentBoid->SetLastKillTickCount(GetTickCount64());
-						}
-					}
-				}
-				else{
-					aquireTarget(currentBoid);
-				}
-			}
-			else{
-				aquireTarget(currentBoid);
-			}
-		}
-
-		
 
 		for (vector<Boid*>::iterator it2 = myBoids.begin(); it2 != myBoids.end(); ++it2)
 		{
-			Boid* newBoid = (*it2);
-			float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
-			// Bumping into OBSTACLE
-			if (newBoid->getType() == BOID_OBSTACLE){
-				if (dist < 20.0f)
-				{
-					Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
-					contactModifier.Normalize();
-					currentBoid->SetDirection(contactModifier);
-					overrideModifier = true;
-					break;
+			if ((*it) != (*it2)){
+				Boid* newBoid = (*it2);
+				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
+				// Bumping into OBSTACLE
+				if (newBoid->getType() == BOID_OBSTACLE){
+					if (dist < newBoid->getSight())
+					{
+						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						contactModifier.Normalize();
+						currentBoid->SetDirection(contactModifier);
+						overrideModifier = true;
+						break;
+					}
 				}
-			}
-			//currentBoid.type = prey | newBoid.type = predator
-			else if (currentBoid->getType() < newBoid->getType())
-			{
-				if (dist < currentBoid->getSight())
+				//currentBoid.type = prey | newBoid.type = predator
+				else if (currentBoid->getType() < newBoid->getType())
 				{
-					Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
-					modifier = fearModifier;
-					currentBoid->SetSpeed(currentBoid->getMaxSpeed());
+					if (dist < currentBoid->getSight())
+					{
+						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						currentBoid->SetDirection(fearModifier);
+						overrideModifier = true;
+						currentBoid->SetSpeed(currentBoid->getMaxSpeed());
+					}
 				}
-			}
-			//currentBoid.type == newBoid.type 
-			else if (currentBoid->getType() == newBoid->getType())
-			{
-				if (dist < 20.0f)
+				//currentBoid.type == newBoid.type 
+				else if (currentBoid->getType() == newBoid->getType())
 				{
-					Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
-					contactModifier.Normalize();
-					modifier = contactModifier;
-					overrideModifier = true;
-					break;
-				}
+					if (dist < 20.0f)
+					{
+						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
+						contactModifier.Normalize();
+						modifier = contactModifier;
+						overrideModifier = true;
+						break;
+					}
 
-				if (dist < SimulationParameters::groupDistance)
-				{
-					avPos += newBoid->GetPos();
-					avDir += newBoid->getDirection();
-					avSpeed += newBoid->getSpeed();
-					count++;
+					if (dist < SimulationParameters::groupDistance)
+					{
+						avPos += newBoid->GetPos();
+						avDir += newBoid->getDirection();
+						avSpeed += newBoid->getSpeed();
+						count++;
+					}
 				}
-			}
-			//Predator Hunting Prey
-			else if (currentBoid->getType() > newBoid->getType()){
-
+				//Predator Hunting Prey
+				else if (currentBoid->getType() > newBoid->getType() && newBoid->getType() != BOID_OBSTACLE){
+					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < 10.0f)
+					{
+						newBoid->Damage(100.0f);
+						currentBoid->Eat();
+						currentBoid->SetLastKillTickCount(GetTickCount64());
+					}
+					else if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < currentBoid->getSight()){
+						targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
+						preyCount++;
+					}
+				}
 			}
 		}
-
-
+		if (targetHeading != Vector3(0.0f, 0.0f, 0.0f)){
+			currentBoid->SetSpeed(currentBoid->getMaxSpeed());
+			targetHeading /= preyCount;
+			targetHeading.Normalize();
+			currentBoid->SetDirection(targetHeading);
+			overrideModifier = true;
+		}
 		if (count > 0 && !overrideModifier)
 		{
 			avDir /= static_cast<float>(count);
@@ -191,8 +170,10 @@ void boidManager::Tick(GameData* GD)
 			Vector3 centerModifier = Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos();
 			if (centerModifier.Length() > (SimulationParameters::mapSize / 2))
 			{
+				float l = centerModifier.Length();
 				centerModifier.Normalize();
-				modifier += centerModifier * (centerModifier.Length() / 500.0f);
+				centerModifier *= (((l - (SimulationParameters::mapSize / 2)) / 200.0f));
+				modifier += centerModifier;
 			}
 
 			currentBoid->SetDirection(currentBoid->getDirection() + modifier);

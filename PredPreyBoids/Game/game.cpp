@@ -69,7 +69,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.boidMaxSpeed = 20.0f;
 	para.boidFearBoost = 0.0f;
 	para.restTime = 800.0f;
-	para.mapSize = 400.0f;
+	para.mapSize = 600.0f;
 	para.starvationTime = 5000.0f;
 
 	boidManager* boidMan = new boidManager();
@@ -267,7 +267,11 @@ bool Game::ReadMouse()
 			return false;
 		}
 	}
-
+	RECT rc;
+	const HWND hDesktop = GetDesktopWindow();
+	GetWindowRect(hDesktop, &rc);
+	SetCursorPos(rc.right/2, rc.bottom/2);
+	ShowCursor(false);
 	return true;
 
 }
