@@ -12,7 +12,7 @@ public:
 protected:
 	virtual void Transform()
 	{
-		for (int i = 0; i<m_numPrims * 3; i++)
+		for (int i = 0; i< m_numPrims * 3; i++)
 		{
 			m_vertices[i].Color *= ((i / 3) % 2) ? 1.0f : 0.5f;
 			m_vertices[i].Color.w = 1.0f;

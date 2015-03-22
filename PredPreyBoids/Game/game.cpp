@@ -21,7 +21,7 @@ float SimulationParameters::groupHeading;
 float SimulationParameters::groupStrength;
 float SimulationParameters::restTime;
 float SimulationParameters::mapSize;
-float SimulationParameters::boidFearBoost;
+bool SimulationParameters::cursorObstacle;
 float SimulationParameters::starvationTime;
 
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
@@ -63,11 +63,11 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->EF = m_myEF;
 
 	SimulationParameters para;
-	para.groupStrength = 2.00f;
-	para.groupDistance = 200.0f;
-	para.groupHeading = 0.6f;
+	para.groupStrength = 1.0f;
+	para.groupDistance = 300.0f;
+	para.groupHeading = 0.3f;
 	para.boidMaxSpeed = 20.0f;
-	para.boidFearBoost = 0.0f;
+	para.cursorObstacle = false;
 	para.restTime = 800.0f;
 	para.mapSize = 600.0f;
 	para.starvationTime = 5000.0f;
@@ -161,14 +161,8 @@ bool Game::update()
 
 	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))
 	{
-		if (m_GD->GS == GS_PLAY_MAIN_CAM)
-		{
-			m_GD->GS = GS_PLAY_TPS_CAM;
-		}
-		else
-		{
-			m_GD->GS = GS_PLAY_MAIN_CAM;
-		}
+		SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
+		ShowCursor(!SimulationParameters::cursorObstacle);
 	}
 
 
@@ -267,11 +261,13 @@ bool Game::ReadMouse()
 			return false;
 		}
 	}
-	RECT rc;
-	const HWND hDesktop = GetDesktopWindow();
-	GetWindowRect(hDesktop, &rc);
-	SetCursorPos(rc.right/2, rc.bottom/2);
-	ShowCursor(false);
+	if (SimulationParameters::cursorObstacle)
+	{
+		RECT rc;
+		const HWND hDesktop = GetDesktopWindow();
+		GetWindowRect(hDesktop, &rc);
+		SetCursorPos(rc.right / 2, rc.bottom / 2);
+	}
 	return true;
 
 }

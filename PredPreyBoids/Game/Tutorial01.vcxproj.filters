@@ -37,9 +37,6 @@
     <ClInclude Include="camera.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
-    <ClInclude Include="terrain.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Turret_base.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
@@ -56,9 +53,6 @@
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
     <ClInclude Include="SpikedVB.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="spiral.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
     <ClInclude Include="pillow.h">
@@ -97,9 +91,6 @@
     <ClInclude Include="DrawData2D.h">
       <Filter>Engine\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="snail.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
     <ClInclude Include="boid.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
@@ -120,9 +111,6 @@
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="camera.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
-    <ClCompile Include="terrain.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="turret_base.cpp">
@@ -148,9 +136,6 @@
     </ClCompile>
     <ClCompile Include="GameObject2D.cpp">
       <Filter>Engine\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="snail.cpp">
-      <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="boid.cpp">
       <Filter>Engine\GameObject Source</Filter>

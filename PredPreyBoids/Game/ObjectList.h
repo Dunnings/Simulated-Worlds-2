@@ -5,16 +5,13 @@
 
 #include "camera.h"
 #include "CMOGO.h"
-#include "terrain.h"
 #include "Turret_base.h"
 #include "light.h"
 #include "VBGO.h"
 #include "fileVBGO.h"
 #include "VBCube.h"
 #include "SpikedVB.h"
-#include "spiral.h"
 #include "pillow.h"
-#include "snail.h"
 #include "boid.h"
 #include "boidManager.h"
 

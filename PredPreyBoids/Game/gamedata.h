@@ -24,7 +24,7 @@ struct SimulationParameters
 	static float boidMaxSpeed;
 	static float restTime;
 	static float mapSize;
-	static float boidFearBoost;
+	static bool cursorObstacle;
 	static float starvationTime;
 };
 

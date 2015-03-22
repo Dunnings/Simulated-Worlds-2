@@ -55,19 +55,27 @@ Boid* boidManager::spawnBoid(BoidType type)
 
 void boidManager::Tick(GameData* GD)
 {
-	// Cursor Position
-	if (GD->mouse->lX > 0) {
-			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
-	}
-	else if (GD->mouse->lX < 0){
-			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
-	}
 
-	if (GD->mouse->lY > 0){
+	if (SimulationParameters::cursorObstacle)
+	{
+		// Cursor Position
+		if (GD->mouse->lX > 0)
+		{
+			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
+		}
+		else if (GD->mouse->lX < 0)
+		{
+			cursor->SetPos(cursor->GetPos() + Vector3(GD->mouse->lX / 2.0f, 0.0f, 0.0f));
+		}
+
+		if (GD->mouse->lY > 0)
+		{
 			cursor->SetPos(cursor->GetPos() + Vector3(0.0f, 0.0f, GD->mouse->lY / 2.0f));
-	}
-	else if (GD->mouse->lY < 0){
+		}
+		else if (GD->mouse->lY < 0)
+		{
 			cursor->SetPos(cursor->GetPos() + Vector3(0.0f, 0.0f, GD->mouse->lY / 2.0f));
+		}
 	}
 
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
@@ -120,8 +128,7 @@ void boidManager::Tick(GameData* GD)
 						overrideModifier = true;
 						break;
 					}
-
-					if (dist < SimulationParameters::groupDistance)
+					else if (dist < SimulationParameters::groupDistance)
 					{
 						avPos += newBoid->GetPos();
 						avDir += newBoid->getDirection();
