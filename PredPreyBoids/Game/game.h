@@ -22,6 +22,7 @@ class TPSCamera;
 struct GameData;
 struct DrawData;
 struct DrawData2D;
+class UserInterfaceManager;
 
 class Game
 {
@@ -59,11 +60,15 @@ protected:
 	unsigned char			m_prevKeyboardState[256];
 	IDirectInputDevice8*	m_pMouse;
 	DIMOUSESTATE			m_mouse_state;
+	DIMOUSESTATE			m_prev_mouse_state;
 
 	//my GameData
 	GameData* m_GD;
 	DrawData* m_DD;
 	DrawData2D* m_DD2D;
+
+	//UI
+	UserInterfaceManager* UIManager;
 	
 };
 

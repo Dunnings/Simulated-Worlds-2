@@ -14,5 +14,6 @@
 #include "pillow.h"
 #include "boid.h"
 #include "boidManager.h"
+#include "userInterfaceManager.h"
 
 #endif

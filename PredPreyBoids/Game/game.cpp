@@ -54,17 +54,23 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	hr = m_pMouse->SetCooperativeLevel(g_hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	hr = m_pMouse->SetDataFormat(&c_dfDIMouse);
 
+	//UI
+	UIManager = new UserInterfaceManager();
+	m_GameObjects.push_back(UIManager);
+
 	m_GD = new GameData();
 	m_GD->keyboard = m_keyboardState;
 	m_GD->prevKeyboard = m_prevKeyboardState;
 	m_GD->mouse = &m_mouse_state;
+	m_GD->prevMouse = &m_prev_mouse_state;
 	m_GD->GS = GS_PLAY_MAIN_CAM;
 	m_GD->p3d = _pd3dDevice;
 	m_GD->EF = m_myEF;
+	m_GD->UIManager = UIManager;
 
 	SimulationParameters para;
 	para.groupStrength = 1.0f;
-	para.groupDistance = 300.0f;
+	para.groupDistance = 200.0f;
 	para.groupHeading = 0.3f;
 	para.boidMaxSpeed = 20.0f;
 	para.cursorObstacle = false;
@@ -98,6 +104,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_DD->pd3dImmediateContext = pd3dImmediateContext;
 	m_DD->states = m_States;
 	m_DD->light = m_Light;
+
 
 	//initilise the defaults for the VBGOs
 	VBGO::Init(_pd3dDevice);
@@ -208,7 +215,10 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 	{
 		(*it)->draw(m_DD2D);
 	}
-	m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(attempt.c_str()), Vector2(5, 5), Colors::Yellow);
+	for (list<UIElement*>::iterator it = UIManager->toDraw.begin(); it != UIManager->toDraw.end(); it++){
+		const wchar_t* output = &((*it)->text);
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), output, Vector2((*it)->location.x, (*it)->location.y), Colors::PaleVioletRed);
+	}
 	m_DD2D->m_Sprites->End();
 
 	_pd3dImmediateContext->OMSetDepthStencilState(m_States->DepthDefault(), 0);
@@ -245,6 +255,7 @@ bool Game::ReadKeyboard()
 bool Game::ReadMouse()
 {
 	//clear out previous state
+	CopyMemory(&m_prev_mouse_state, &m_mouse_state, sizeof(m_mouse_state));
 	ZeroMemory(&m_mouse_state, sizeof(m_mouse_state));
 
 	// Read the Mouse device.

@@ -1,5 +1,7 @@
 #include "boidManager.h"
 #include "boid.h"
+#include "userInterfaceManager.h"
+#include <sstream>
 
 ID3D11Device* GameData::p3d;
 MyEffectFactory* GameData::EF;
@@ -55,7 +57,10 @@ Boid* boidManager::spawnBoid(BoidType type)
 
 void boidManager::Tick(GameData* GD)
 {
-
+	int totalBoids = 0;
+	int totalObstacles = 0;
+	int totalPrey = 0;
+	int totalPred = 0;
 	if (SimulationParameters::cursorObstacle)
 	{
 		// Cursor Position
@@ -81,6 +86,17 @@ void boidManager::Tick(GameData* GD)
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
 		Boid* currentBoid = (*it);
+
+		totalBoids++;
+		if (currentBoid->getType() == BOID_OBSTACLE){
+			totalObstacles++;
+		}
+		else if (currentBoid->getType() == BOID_ROACH){
+			totalPrey++;
+		}
+		else if (currentBoid->getType() == BOID_CRAB){
+			totalPred++;
+		}
 		Vector3 avDir;
 		float avSpeed = 0.0f;
 		Vector3 avPos;
@@ -165,9 +181,14 @@ void boidManager::Tick(GameData* GD)
 			avSpeed /= static_cast<float>(count);
 			Vector3 toAverage = currentBoid->GetPos() - avPos;
 			modifier.Normalize();
-			modifier += (toAverage * SimulationParameters::groupStrength);
-			modifier += (avDir * SimulationParameters::groupHeading);
+			if (toAverage.Length() > SimulationParameters::groupDistance * 0.6){
+				modifier += (toAverage * SimulationParameters::groupStrength);
+			}
+			if (toAverage.Length() > SimulationParameters::groupDistance * 0.3){
+				modifier += (avDir * SimulationParameters::groupHeading);
+			}
 			currentBoid->SetSpeed(avSpeed);
+
 		}
 
 		//Tick if Boid is alive
@@ -192,6 +213,11 @@ void boidManager::Tick(GameData* GD)
 			it = myBoids.erase(it);
 		}
 	}
+	GD->UIManager->addToDraw("Total Boids: " + to_string(totalBoids), "total_boids");
+	GD->UIManager->addToDraw("Total Obstacles: " + to_string(totalObstacles), "total_obstacles");
+	GD->UIManager->addToDraw("Total Prey: " + to_string(totalPrey), "total_prey");
+	GD->UIManager->addToDraw("Total Predators: " + to_string(totalPred), "total_pred");
+
 	GameObject::Tick(GD);
 }
 
