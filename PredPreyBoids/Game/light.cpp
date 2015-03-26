@@ -17,8 +17,8 @@ Light::~Light()
 void Light::Tick(GameData* _GD)
 {
 	//not really needed but spins the camera around to show off the lambert default VBGO shader
-	static float time = 0.0f;
-	time += _GD->dt;
-	m_pos.x = 100.0f * cos(time);
-	m_pos.z = 100.0f * sin(time);
+	//static float time = 0.0f;
+	//time += _GD->dt;
+	//m_pos.x = 100.0f * cos(time);
+	//m_pos.z = 100.0f * sin(time);
 }

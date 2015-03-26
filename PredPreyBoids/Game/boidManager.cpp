@@ -13,11 +13,11 @@ boidManager::boidManager()
 	cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
 	for (int i = 0; i < 200; i++)
 	{
-		spawnBoid(BOID_ROACH);
+		spawnBoid(BOID_SPHERE);
 	}
 	for (int i = 0; i < 3; i++)
 	{
-		spawnBoid(BOID_CRAB);
+		spawnBoid(BOID_RED_SPHERE);
 	}
 }
 
@@ -28,20 +28,7 @@ boidManager::~boidManager()
 
 Boid* boidManager::spawnBoid(BoidType type)
 {
-	Boid* newBoid;
-	if (type == BOID_OBSTACLE)
-	{
-		newBoid = new Boid("treasure_chest.cmo");
-	}
-	else if (type == BOID_CRAB)
-	{
-		newBoid = new Boid("crab.cmo");
-		newBoid->SetSight(200.0f);
-	}
-	else
-	{
-		newBoid = new Boid("roach.cmo");
-	}
+	Boid* newBoid = new Boid();
 	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
 	float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
@@ -51,6 +38,11 @@ Boid* boidManager::spawnBoid(BoidType type)
 	newBoid->SetSpeed(r4);
 	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
 	newBoid->SetType(type);
+	newBoid->initialize();
+	if (type == 1)
+	{
+		newBoid->SetScale(0.6f);
+	}
 	myBoids.push_back(newBoid);
 	return newBoid;
 }
@@ -158,7 +150,6 @@ void boidManager::Tick(GameData* GD)
 					{
 						newBoid->Damage(100.0f);
 						currentBoid->Eat();
-						currentBoid->SetLastKillTickCount(GetTickCount64());
 					}
 					else if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < currentBoid->getSight()){
 						targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
@@ -200,7 +191,8 @@ void boidManager::Tick(GameData* GD)
 			{
 				float l = centerModifier.Length();
 				centerModifier.Normalize();
-				centerModifier *= (((l - (SimulationParameters::mapSize / 2)) / 200.0f));
+				//Gradient out over 100 units
+				centerModifier *= (((l - (SimulationParameters::mapSize / 2)) / 100.0f));
 				modifier += centerModifier;
 			}
 

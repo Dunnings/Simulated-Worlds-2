@@ -129,7 +129,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 	GetWindowRect(hDesktop, &rc);
 	AdjustWindowRect(&rc, WS_CHILDWINDOW, FALSE);
 	//SS Chnaged Window name
-    g_hWnd = CreateWindow( L"TutorialWindowClass", L"GEA TUTS PROJECT", WS_OVERLAPPEDWINDOW,
+    g_hWnd = CreateWindow( L"TutorialWindowClass", L"BOID Predator and Prey", WS_OVERLAPPEDWINDOW,
                            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
                            nullptr );
     if( !g_hWnd )

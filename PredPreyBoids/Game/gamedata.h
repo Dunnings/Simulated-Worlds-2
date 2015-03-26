@@ -39,8 +39,8 @@ enum BoidState
 enum BoidType
 {
 	BOID_OBSTACLE,
-	BOID_ROACH,
-	BOID_CRAB
+	BOID_SPHERE,
+	BOID_RED_SPHERE,
 };
 
 #endif
