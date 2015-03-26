@@ -54,10 +54,6 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	hr = m_pMouse->SetCooperativeLevel(g_hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	hr = m_pMouse->SetDataFormat(&c_dfDIMouse);
 
-	//UI
-	UIManager = new UserInterfaceManager();
-	m_GameObjects.push_back(UIManager);
-
 	m_GD = new GameData();
 	m_GD->keyboard = m_keyboardState;
 	m_GD->prevKeyboard = m_prevKeyboardState;
@@ -66,12 +62,11 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->GS = GS_PLAY_MAIN_CAM;
 	m_GD->p3d = _pd3dDevice;
 	m_GD->EF = m_myEF;
-	m_GD->UIManager = UIManager;
 
 	SimulationParameters para;
-	para.groupStrength = 1.0f;
-	para.groupDistance = 200.0f;
-	para.groupHeading = 0.3f;
+	para.groupStrength = 0.7f;
+	para.groupDistance = 300.0f;
+	para.groupHeading = 0.4f;
 	para.boidMaxSpeed = 20.0f;
 	para.cursorObstacle = false;
 	para.restTime = 800.0f;
@@ -214,10 +209,6 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 	for (list<GameObject2D *>::iterator it = m_GameObject2Ds.begin(); it != m_GameObject2Ds.end(); it++)
 	{
 		(*it)->draw(m_DD2D);
-	}
-	for (list<UIElement*>::iterator it = UIManager->toDraw.begin(); it != UIManager->toDraw.end(); it++){
-		const wchar_t* output = &((*it)->text);
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), output, Vector2((*it)->location.x, (*it)->location.y), Colors::PaleVioletRed);
 	}
 	m_DD2D->m_Sprites->End();
 

@@ -364,7 +364,6 @@
     <ClCompile Include="light.cpp" />
     <ClCompile Include="turret_base.cpp" />
     <ClCompile Include="Tutorial01.cpp" />
-    <ClCompile Include="userInterfaceManager.cpp" />
     <ClCompile Include="VBCube.cpp" />
     <ClCompile Include="VBGO.cpp" />
   </ItemGroup>
@@ -390,7 +389,6 @@
     <CLInclude Include="resource.h" />
     <ClInclude Include="SpikedVB.h" />
     <ClInclude Include="Turret_base.h" />
-    <ClInclude Include="userInterfaceManager.h" />
     <ClInclude Include="VBCube.h" />
     <ClInclude Include="VBGO.h" />
     <ClInclude Include="vertex.h" />

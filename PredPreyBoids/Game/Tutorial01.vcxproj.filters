@@ -97,9 +97,6 @@
     <ClInclude Include="boidManager.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
-    <ClInclude Include="userInterfaceManager.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tutorial01.rc">
@@ -144,9 +141,6 @@
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="boidManager.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
-    <ClCompile Include="userInterfaceManager.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
   </ItemGroup>
