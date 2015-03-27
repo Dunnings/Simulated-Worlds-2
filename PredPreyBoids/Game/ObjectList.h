@@ -4,6 +4,7 @@
 //to save you typing in all the headers of all the classes derived from the GameObject class lets put them all here
 
 #include "camera.h"
+#include "predCamera.h"
 #include "CMOGO.h"
 #include "Turret_base.h"
 #include "light.h"

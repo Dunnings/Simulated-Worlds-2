@@ -10,6 +10,8 @@
 #include "DDSTextureLoader.h"
 #include "drawdata.h"
 #include "DrawData2D.h"
+#include <iostream>
+#include <fstream>
 
 using namespace DirectX;
 
@@ -65,6 +67,8 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->EF = m_myEF;
 
 	SimulationParameters para;
+
+	//Default values
 	para.groupStrength = 0.7f;
 	para.groupDistance = 300.0f;
 	para.groupHeading = 0.4f;
@@ -75,14 +79,64 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.starvationTime = 5000.0f;
 	para.showDebug = true;
 
-	boidManager* boidMan = new boidManager();
+
+	ifstream parameterFile;
+	parameterFile.open("SimulationParameters.dat");
+	if (parameterFile.is_open()){
+		while (!parameterFile.eof()){
+			string currentLine;
+			getline(parameterFile, currentLine);
+			if (currentLine.find(" = ")){
+				string parameter;
+				string value;
+				parameter = currentLine.substr(0, currentLine.find(" = "));
+				value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
+				
+				if (parameter == "groupStrength"){
+					para.groupStrength = stof(value);
+				}
+				else if (parameter == "groupDistance"){
+					para.groupDistance = stof(value);
+				}
+				else if (parameter == "groupHeading"){
+					para.groupHeading = stof(value);
+				}
+				else if (parameter == "boidMaxSpeed"){
+					para.boidMaxSpeed = stof(value);
+				}
+				else if (parameter == "restTime"){
+					para.restTime = stof(value);
+				}
+				else if (parameter == "mapSize"){
+					para.mapSize = stof(value);
+				}
+				else if (parameter == "starvationTime"){
+					para.starvationTime = stof(value);
+				}
+				else if (parameter == "showDebug"){
+					para.showDebug = (value == "true");
+				}
+				else if (parameter == "cursorObstacle"){
+					para.cursorObstacle = (value == "true");
+				}
+			}
+		}
+	}
+
+
+
+	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
 
-	//create a base camera
-	m_cam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
-	m_cam->SetPos( Vector3(0.0f, 1000.0f, 100.0f) );
-	m_GameObjects.push_back(m_cam);
-
+	player = boidMan->spawnBoid(BOID_RED_SPHERE);
+	
+	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
+	m_mainCam->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
+	m_GameObjects.push_back(m_mainCam);
+		
+	m_predCamera = new PredCamera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, player, Vector3::Up, Vector3(0.0f, 100.0f, -150.0f));
+	m_predCamera->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
+	m_GameObjects.push_back(m_predCamera);
 	
 	m_Light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.4f, 0.1f, 0.1f, 1.0f));
 	m_GameObjects.push_back(m_Light);
@@ -98,6 +152,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 		
 	//create Draw Data
 	m_DD = new DrawData();
+	m_DD->cam = m_mainCam;
 	m_DD->pd3dImmediateContext = pd3dImmediateContext;
 	m_DD->states = m_States;
 	m_DD->light = m_Light;
@@ -124,7 +179,6 @@ Game::~Game()
 		m_pKeyboard->Release();
 	}
 	if (m_pDirectInput) m_pDirectInput->Release();
-
 
 	//get rid of the game objects here
 	for (list<GameObject *>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
@@ -165,8 +219,23 @@ bool Game::update()
 
 	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))
 	{
-		SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
-		ShowCursor(!SimulationParameters::cursorObstacle);
+		if (m_GD->GS == GS_PLAY_MAIN_CAM){
+			SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
+			ShowCursor(!SimulationParameters::cursorObstacle);
+		}
+	}
+
+	if ((m_keyboardState[DIK_RETURN] & 0x80) && !(m_prevKeyboardState[DIK_RETURN] & 0x80))
+	{
+		if (m_GD->GS == GS_PLAY_MAIN_CAM){
+			player = boidMan->spawnBoid(BOID_RED_SPHERE);
+			m_GD->GS = GS_PLAY_TPS_CAM;
+		}
+		else{
+			boidMan->deleteBoid(player);
+			player = nullptr;
+			m_GD->GS = GS_PLAY_MAIN_CAM;
+		}
 	}
 
 	if ((m_keyboardState[DIK_F1] & 0x80) && !(m_prevKeyboardState[DIK_F1] & 0x80))
@@ -198,8 +267,16 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 {
 	m_DD->pd3dImmediateContext = _pd3dImmediateContext;
 
-	m_DD->cam = m_cam;
-	
+	m_DD->cam = m_mainCam;
+
+	if (m_GD->GS == GS_PLAY_MAIN_CAM)
+	{
+		m_DD->cam = m_mainCam;
+	}
+	if (m_GD->GS == GS_PLAY_TPS_CAM && m_predCamera->GetTarget() != NULL)
+	{
+		m_DD->cam = m_predCamera;
+	}
 	VBGO::UpdateConstantBuffer(m_DD);
 
 	//draw all 3D objects

@@ -4,6 +4,8 @@
 #include "gamedata.h"
 #include "VBCube.h"
 #include <vector>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 using std::vector;
 
@@ -46,6 +48,8 @@ public:
 	bool isAlive() { return m_alive; };
 	//Get the BOID's current weight
 	int getWeight(){ return m_weight; };
+	//Get the BOID's smooth yaw
+	float getSmoothYaw(){ return smooth_yaw; };
 	//Get the BOID's scale
 	Vector3 GetScale() { return m_scale; };
 	//Nearest group position
@@ -83,7 +87,7 @@ protected:
 	//Every vertex of this BOID
 	myVertex* m_vertices;
 	//Force lines
-	myVertex lineVertices[4];
+	myVertex lineVertices[2];
 	//Small function to modify the VB to produce a sphere
 	virtual void SphereTransform(Color c)
 	{
@@ -96,6 +100,16 @@ protected:
 
 			Vector3 newPos = 10.0f *spherePos;
 			m_vertices[i].Color = c;
+			m_vertices[i].Pos = newPos;
+		}
+		for (int i = 0; i<m_numPrims * 3; i++)
+		{
+			Vector3 vertPos = m_vertices[i].Pos;
+
+			Matrix transform = Matrix::CreateTranslation(0.0f, 6.0f - sqrt(vertPos.x*vertPos.x + vertPos.z*vertPos.z), 0.0f);
+			Matrix rotate = Matrix::CreateRotationX(M_PI / 2);
+			Vector3 newPos = Vector3::Transform(vertPos, transform);
+
 			m_vertices[i].Pos = newPos;
 		}
 	}

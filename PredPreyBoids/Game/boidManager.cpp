@@ -9,7 +9,7 @@ boidManager::boidManager()
 {
 	
 	//Spawn 200 lower level BOIDs
-	for (int i = 0; i < 200; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		spawnBoid(BOID_SPHERE);
 	}

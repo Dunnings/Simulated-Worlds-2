@@ -130,7 +130,7 @@ void Boid::initialize()
 	//Here I just change the BOIDs to be different colour spheres
 	if (m_type == BOID_SPHERE)
 	{
-		SphereTransform(Color(1.0f, 1.0f, 1.0f));
+		SphereTransform(Color(0.0f, 1.0f, 1.0f));
 	}
 	if (m_type == BOID_RED_SPHERE)
 	{
