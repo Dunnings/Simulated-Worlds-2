@@ -7,13 +7,16 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
+	//Spawn one obstacle for the cursor
 	cursor = spawnBoid(BOID_OBSTACLE);
 	cursor->SetSight(50.0f);
 	cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
+	//Spawn 200 lower level BOIDs
 	for (int i = 0; i < 200; i++)
 	{
 		spawnBoid(BOID_SPHERE);
 	}
+	//Spawn 3 tier 2 BOIDs
 	for (int i = 0; i < 3; i++)
 	{
 		spawnBoid(BOID_RED_SPHERE);
@@ -27,22 +30,34 @@ boidManager::~boidManager()
 
 Boid* boidManager::spawnBoid(BoidType type)
 {
+	//Dynamically create a new BOID
 	Boid* newBoid = new Boid();
+	//Set the max speed to the pre-determined value
 	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
+	//Create four random floats between -1.0 and 1.0 
 	float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 	float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-	float r4 = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (SimulationParameters::boidMaxSpeed - 1.0f)));
-	newBoid->SetDirection(Vector3(r1, 0.0f, r2));
-	newBoid->SetSpeed(r4);
-	newBoid->SetPos(Vector3(r3 * SimulationParameters::mapSize * 0.5f, 0.0f, r1* SimulationParameters::mapSize * 0.5f));
+	float r4 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+	//Set the BOID position to a random location within pre-determined map bounds
+	newBoid->SetPos(Vector3(r1 * SimulationParameters::mapSize * 0.5f, 0.0f, r2* SimulationParameters::mapSize * 0.5f));
+	//Set direction randomly
+	newBoid->SetDirection(Vector3(r3, 0.0f, r4));
+	//Create a random float between 1.0 and the pre-determined max speed
+	float rS = 1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / ((SimulationParameters::boidMaxSpeed*type) - 1.0f)));
+	newBoid->SetSpeed(rS);
+	//Set the BOID type
 	newBoid->SetType(type);
+	//Initialise BOID vertex buffer
 	newBoid->initialize();
+	//Scale down prey
 	if (type == 1)
 	{
 		newBoid->SetScale(0.6f);
 	}
+	//Add BOID to manager's vector
 	myBoids.push_back(newBoid);
+	//Return the created BOID
 	return newBoid;
 }
 
