@@ -23,9 +23,10 @@ public:
 	void killBoid(Boid* target);
 	void aquireTarget(Boid* pred);
 	Boid* closestPrey(Boid* _pred);
+	void deleteBoid(Boid* b);
 private:
 	vector<Boid*> myBoids;
-	Boid* cursor;
+	Boid* cursor = nullptr;
 };
 
 #endif

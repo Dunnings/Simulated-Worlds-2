@@ -48,6 +48,8 @@ public:
 	int getWeight(){ return m_weight; };
 	//Get the BOID's scale
 	Vector3 GetScale() { return m_scale; };
+	//Nearest group position
+	Vector3 m_grouping;
 
 	//Damage the BOID and kill it if necessary
 	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
@@ -80,6 +82,8 @@ protected:
 	ULONGLONG lastKillTickCount;
 	//Every vertex of this BOID
 	myVertex* m_vertices;
+	//Force lines
+	myVertex lineVertices[4];
 	//Small function to modify the VB to produce a sphere
 	virtual void SphereTransform(Color c)
 	{

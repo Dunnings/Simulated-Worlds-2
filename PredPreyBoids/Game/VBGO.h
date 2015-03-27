@@ -23,6 +23,7 @@ protected:
 
 	//Direct X information for the model for this GameObject
 	ID3D11Buffer* m_VertexBuffer;
+	ID3D11Buffer* m_LineVertexBuffer;
 	ID3D11Buffer* m_IndexBuffer;
 	UINT m_numPrims;
 
@@ -64,7 +65,9 @@ protected:
 	void BuildIB(ID3D11Device* _GD,void* _indices);
 
 	//once populated build a Vertex Buffer
-	void BuildVB(ID3D11Device* _GD,int _numVerts, void* _vertices);
+	void BuildVB(ID3D11Device* _GD, int _numVerts, void* _vertices);
+
+	void BuildLineVB(ID3D11Device* _GD, int _numVerts, void* _vertices);
 
 };
 

@@ -23,6 +23,7 @@ float SimulationParameters::restTime;
 float SimulationParameters::mapSize;
 bool SimulationParameters::cursorObstacle;
 float SimulationParameters::starvationTime;
+bool SimulationParameters::showDebug;
 
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
 {
@@ -72,6 +73,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.restTime = 800.0f;
 	para.mapSize = 600.0f;
 	para.starvationTime = 5000.0f;
+	para.showDebug = true;
 
 	boidManager* boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
@@ -165,6 +167,11 @@ bool Game::update()
 	{
 		SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
 		ShowCursor(!SimulationParameters::cursorObstacle);
+	}
+
+	if ((m_keyboardState[DIK_F1] & 0x80) && !(m_prevKeyboardState[DIK_F1] & 0x80))
+	{
+		SimulationParameters::showDebug = !SimulationParameters::showDebug;
 	}
 
 

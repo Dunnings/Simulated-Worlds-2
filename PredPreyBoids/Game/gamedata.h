@@ -28,6 +28,7 @@ struct SimulationParameters
 	static float restTime;
 	static float mapSize;
 	static bool cursorObstacle;
+	static bool showDebug;
 	static float starvationTime;
 };
 

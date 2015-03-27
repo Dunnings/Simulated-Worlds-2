@@ -57,6 +57,7 @@ VBGO::~VBGO()
 {
 	//BUT WE DO TIDY THEM AWAY
 	if (m_VertexBuffer) m_VertexBuffer->Release();
+	if (m_LineVertexBuffer) m_LineVertexBuffer->Release();
 	if (m_IndexBuffer) m_IndexBuffer->Release();	
 	if (m_pVertexShader) m_pVertexShader->Release();
 	if (m_pVertexLayout) m_pVertexLayout->Release();
@@ -281,4 +282,22 @@ void VBGO::BuildVB(ID3D11Device* _GD, int _numVerts, void* _vertices)
 	ZeroMemory(&InitData, sizeof(InitData));
 	InitData.pSysMem = _vertices;
 	hr = _GD->CreateBuffer(&bd, &InitData, &m_VertexBuffer);
+}
+
+void VBGO::BuildLineVB(ID3D11Device* _GD, int _numVerts, void* _vertices)
+{
+	//structures from creating buffers
+	D3D11_BUFFER_DESC bd;
+	D3D11_SUBRESOURCE_DATA InitData;
+	HRESULT hr = S_OK;
+
+	//build vertex buffer
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(myVertex) * _numVerts;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = _vertices;
+	hr = _GD->CreateBuffer(&bd, &InitData, &m_LineVertexBuffer);
 }

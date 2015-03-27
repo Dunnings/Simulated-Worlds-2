@@ -7,10 +7,7 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	//Spawn one obstacle for the cursor
-	cursor = spawnBoid(BOID_OBSTACLE);
-	cursor->SetSight(50.0f);
-	cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
+	
 	//Spawn 200 lower level BOIDs
 	for (int i = 0; i < 200; i++)
 	{
@@ -61,10 +58,40 @@ Boid* boidManager::spawnBoid(BoidType type)
 	return newBoid;
 }
 
+void boidManager::deleteBoid(Boid* b){
+	if (cursor == b){
+		delete b;
+		b = nullptr;
+	}
+	else{
+		for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
+		{
+			if ((*it) == b)
+			{
+				delete b;
+				b = nullptr;
+				it = myBoids.erase(it);
+				break;
+			}
+			else
+			{
+				it++;
+			}
+		}
+	}
+}
+
 void boidManager::Tick(GameData* GD)
 {
 	if (SimulationParameters::cursorObstacle)
 	{
+		if (cursor == nullptr)
+		{
+			//Spawn one obstacle for the cursor
+			cursor = spawnBoid(BOID_OBSTACLE);
+			cursor->SetSight(50.0f);
+			cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
+		}
 		// Cursor Position
 		if (GD->mouse->lX > 0)
 		{
@@ -82,6 +109,15 @@ void boidManager::Tick(GameData* GD)
 		else if (GD->mouse->lY < 0)
 		{
 			cursor->SetPos(cursor->GetPos() + Vector3(0.0f, 0.0f, GD->mouse->lY / 2.0f));
+		}
+		cursor->Tick(GD);
+	}
+	else{
+		if (cursor != nullptr){
+			if (cursor->isAlive()){
+				cursor->Damage(100.0f);
+				cursor = nullptr;
+			}
 		}
 	}
 
@@ -172,13 +208,16 @@ void boidManager::Tick(GameData* GD)
 			avSpeed /= static_cast<float>(count);
 			Vector3 toAverage = currentBoid->GetPos() - avPos;
 			modifier.Normalize();
-			if (toAverage.Length() > SimulationParameters::groupDistance * 0.6){
+			//Only move toward center of group if they are in the outer 40% of the group
+			//if (toAverage.Length() > SimulationParameters::groupDistance * 0.6){
 				modifier += (toAverage * SimulationParameters::groupStrength);
-			}
-			if (toAverage.Length() > SimulationParameters::groupDistance * 0.3){
+			//}
+			//Only move in average direction if in outer 50% of group
+			//if (toAverage.Length() > SimulationParameters::groupDistance * 0.5){
 				modifier += (avDir * SimulationParameters::groupHeading);
-			}
+			//}
 			currentBoid->SetSpeed(avSpeed);
+			currentBoid->m_grouping = toAverage - m_pos;
 
 		}
 
