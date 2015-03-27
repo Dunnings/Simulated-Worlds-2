@@ -6,6 +6,7 @@ PredCamera::PredCamera(float _fieldOfView, float _aspectRatio, float _nearPlaneD
 {
 	m_targetObject = _target;
 	m_dpos = _dpos;
+	m_aimYaw = 0.0f;
 }
 
 PredCamera::~PredCamera()
@@ -15,18 +16,33 @@ PredCamera::~PredCamera()
 
 void PredCamera::Tick(GameData* _GD)
 {
-
-	//Set up position of camera and target position of camera based on new position and orientation of target object
 	m_target = m_targetObject->GetPos();
-	float newYaw = atan2(m_targetObject->getDirection().x, m_targetObject->getDirection().z);
+	//m_aimYaw = atan2(m_targetObject->getDirection().x, m_targetObject->getDirection().z);
 
-	Matrix rotMat = Matrix::CreateRotationY((newYaw * 0.6f) + (lastYaw * 0.4f));
+	float objectYaw = atan2(m_targetObject->getDirection().x, m_targetObject->getDirection().z);
+
+	if (m_aimYaw + XM_2PI + 0.3f < objectYaw + XM_2PI || m_aimYaw + XM_2PI - 0.3f > objectYaw + XM_2PI){
+		// DO NOTHING
+	}
+	else if (m_aimYaw + XM_2PI > objectYaw + XM_2PI)
+	{
+		m_aimYaw -= 0.4f;
+	}
+	else if (m_aimYaw + XM_2PI < objectYaw + XM_2PI)
+	{
+		m_aimYaw += 0.4f;
+	}
+
+	Matrix rotMat = Matrix::CreateRotationY(m_aimYaw);
 	m_pos = m_target + Vector3::Transform(m_dpos, rotMat);
 
+	while (m_aimYaw > XM_2PI){
+		m_aimYaw -= XM_2PI;
+	}
 
-	//and then set up proj and view matrices
-
-	lastYaw = newYaw;
+	while (m_aimYaw < -XM_2PI){
+		m_aimYaw += XM_2PI;
+	}
 
 	Camera::Tick(_GD);
 }

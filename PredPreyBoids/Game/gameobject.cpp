@@ -29,4 +29,13 @@ void GameObject::Tick(GameData* _GD)
 	Matrix  transMat = Matrix::CreateTranslation(m_pos);
 
 	m_worldMat = scaleMat *m_rotMat * transMat;
+
+	while (m_yaw > XM_2PI){
+		m_yaw -= XM_2PI;
+	}
+
+	while (m_yaw < -XM_2PI){
+		m_yaw += XM_2PI;
+	}
+
 }

@@ -17,7 +17,7 @@ public:
 protected:
 	Boid*	m_targetObject;
 	Vector3	m_dpos;
-	float lastYaw;
+	float m_aimYaw;
 };
 
 #endif
