@@ -221,7 +221,8 @@ void Boid::Draw(DrawData* DD)
 {
 	VBGO::Draw(DD);
 
-	if (SimulationParameters::showDebug){
+	if (SimulationParameters::showDebug)
+	{
 		lineVertices[0].Pos = Vector3::Zero;
 		lineVertices[1].Pos = m_direction * m_speed;
 
