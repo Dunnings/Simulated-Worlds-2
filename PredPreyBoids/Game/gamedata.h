@@ -2,6 +2,7 @@
 #define _GAME_DATA_H_
 #include "gamestate.h"
 #include <dinput.h>
+#include <map>
 
 class UserInterfaceManager;
 class MyEffectFactory;
@@ -30,18 +31,7 @@ struct SimulationParameters
 	static bool cursorObstacle;
 	static bool showDebug;
 	static float starvationTime;
-};
-
-enum BoidState
-{
-	BOID_NEUTRAL
-};
-
-enum BoidType
-{
-	BOID_OBSTACLE,
-	BOID_SPHERE,
-	BOID_RED_SPHERE,
+	static std::map<int, int> boidCount;
 };
 
 #endif

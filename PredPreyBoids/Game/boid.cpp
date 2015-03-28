@@ -128,11 +128,11 @@ void Boid::initialize()
 	}
 	
 	//Here I just change the BOIDs to be different colour spheres
-	if (m_type == BOID_SPHERE)
+	if (m_type == 1)
 	{
 		SphereTransform(Color(0.0f, 1.0f, 1.0f));
 	}
-	if (m_type == BOID_RED_SPHERE)
+	if (m_type == 2)
 	{
 		SphereTransform(Color(1.0f, 0.0f, 0.0f));
 	}
@@ -197,7 +197,7 @@ void Boid::Starve(){
 void Boid::Tick(GameData* GD)
 {
 	//If this BOID is not an obstacle
-	if (m_type != BOID_OBSTACLE){
+	if (m_type != 0){
 		//Starvation
 		if (m_weight > 0){
 			if (GetTickCount64() - lastKillTickCount > SimulationParameters::starvationTime){
@@ -224,7 +224,9 @@ void Boid::Draw(DrawData* DD)
 	if (SimulationParameters::showDebug)
 	{
 		lineVertices[0].Pos = Vector3::Zero;
+		lineVertices[0].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 		lineVertices[1].Pos = m_direction * m_speed;
+		lineVertices[1].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 		BuildLineVB(GameData::p3d, 2, lineVertices);
 

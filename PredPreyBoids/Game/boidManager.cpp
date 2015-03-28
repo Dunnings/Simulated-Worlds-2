@@ -1,22 +1,32 @@
 #include "boidManager.h"
 #include "boid.h"
 #include <sstream>
+#include <iterator>
+#include <map>
 
 ID3D11Device* GameData::p3d;
 MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-	
-	//Spawn 200 lower level BOIDs
-	for (int i = 0; i < 100; i++)
-	{
-		spawnBoid(BOID_SPHERE);
+	//If given a boidcount then generate boids based on this
+	if (SimulationParameters::boidCount.size() > 0){
+		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++){
+			for (int i = 0; i < (*it).second; i++){
+				spawnBoid((*it).second);
+			}
+		}
 	}
-	//Spawn 3 tier 2 BOIDs
-	for (int i = 0; i < 3; i++)
-	{
-		spawnBoid(BOID_RED_SPHERE);
+	else{
+		//Otherwise spawn default amount
+		for (int i = 0; i < 100; i++)
+		{
+			spawnBoid(1);
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			spawnBoid(2);
+		}
 	}
 }
 
@@ -25,7 +35,7 @@ boidManager::~boidManager()
 
 }
 
-Boid* boidManager::spawnBoid(BoidType type)
+Boid* boidManager::spawnBoid(int type)
 {
 	//Dynamically create a new BOID
 	Boid* newBoid = new Boid();
@@ -81,14 +91,30 @@ void boidManager::deleteBoid(Boid* b){
 	}
 }
 
+void boidManager::deleteBoid(int type){
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
+	{
+		if ((*it)->getType() == type)
+		{
+			it = myBoids.erase(it);
+			break;
+		}
+		else
+		{
+			it++;
+		}
+	}
+}
+
 void boidManager::Tick(GameData* GD)
 {
+	map<int, int> boidCount;
 	if (SimulationParameters::cursorObstacle)
 	{
 		if (cursor == nullptr)
 		{
 			//Spawn one obstacle for the cursor
-			cursor = spawnBoid(BOID_OBSTACLE);
+			cursor = spawnBoid(0);
 			cursor->SetSight(50.0f);
 			cursor->SetPos(Vector3(0.0f, 0.0f, 0.0f));
 		}
@@ -124,7 +150,6 @@ void boidManager::Tick(GameData* GD)
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
 		Boid* currentBoid = (*it);
-
 		Vector3 avDir;
 		float avSpeed = 0.0f;
 		Vector3 avPos;
@@ -136,11 +161,11 @@ void boidManager::Tick(GameData* GD)
 
 		for (vector<Boid*>::iterator it2 = myBoids.begin(); it2 != myBoids.end(); ++it2)
 		{
-			if ((*it) != (*it2)){
+			if ((*it) != (*it2) && ((*it)->GetPos() - (*it2)->GetPos()).Length() < max((*it)->getSight(), (*it2)->getSight())){
 				Boid* newBoid = (*it2);
 				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
 				// Bumping into OBSTACLE
-				if (newBoid->getType() == BOID_OBSTACLE){
+				if (newBoid->getType() == 0){
 					if (dist < newBoid->getSight())
 					{
 						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
@@ -181,7 +206,7 @@ void boidManager::Tick(GameData* GD)
 					}
 				}
 				//Predator Hunting Prey
-				else if (currentBoid->getType() > newBoid->getType() && newBoid->getType() != BOID_OBSTACLE){
+				else if (currentBoid->getType() > newBoid->getType() && newBoid->getType() != 0){
 					if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < 10.0f)
 					{
 						newBoid->Damage(100.0f);
@@ -238,12 +263,16 @@ void boidManager::Tick(GameData* GD)
 			currentBoid->SetDirection(currentBoid->getDirection() + modifier);
 			currentBoid->Tick(GD);
 			++it;
+
+			boidCount[currentBoid->getType()]++;
+
 		}
 		else
 		{
 			it = myBoids.erase(it);
 		}
 	}
+	SimulationParameters::boidCount = boidCount;
 	GameObject::Tick(GD);
 }
 

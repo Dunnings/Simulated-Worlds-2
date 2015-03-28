@@ -12,6 +12,7 @@
 #include "DrawData2D.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace DirectX;
 
@@ -21,6 +22,7 @@ float SimulationParameters::boidMaxSpeed;
 float SimulationParameters::groupDistance;
 float SimulationParameters::groupHeading;
 float SimulationParameters::groupStrength;
+map<int, int> SimulationParameters::boidCount;
 float SimulationParameters::restTime;
 float SimulationParameters::mapSize;
 bool SimulationParameters::cursorObstacle;
@@ -83,6 +85,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	ifstream parameterFile;
 	parameterFile.open("SimulationParameters.dat");
 	if (parameterFile.is_open()){
+		loadedFile = true;
 		while (!parameterFile.eof()){
 			string currentLine;
 			getline(parameterFile, currentLine);
@@ -128,7 +131,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
 
-	player = boidMan->spawnBoid(BOID_RED_SPHERE);
+	player = boidMan->spawnBoid(2);
 	
 	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
 	m_mainCam->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
@@ -228,7 +231,7 @@ bool Game::update()
 	if ((m_keyboardState[DIK_RETURN] & 0x80) && !(m_prevKeyboardState[DIK_RETURN] & 0x80))
 	{
 		if (m_GD->GS == GS_PLAY_MAIN_CAM){
-			player = boidMan->spawnBoid(BOID_RED_SPHERE);
+			player = boidMan->spawnBoid(2);
 			m_GD->GS = GS_PLAY_TPS_CAM;
 		}
 		else{
@@ -237,6 +240,66 @@ bool Game::update()
 			m_GD->GS = GS_PLAY_MAIN_CAM;
 		}
 	}
+
+	bool isShiftHeld = false;
+	if (m_keyboardState[DIK_LSHIFT] & 0x80){
+		isShiftHeld = true;
+	}
+	if ((m_keyboardState[DIK_0] & 0x80) && !(m_prevKeyboardState[DIK_0] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(0);
+		}
+		else{
+			boidMan->spawnBoid(0);
+		}
+	}
+	if ((m_keyboardState[DIK_1] & 0x80) && !(m_prevKeyboardState[DIK_1] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(1);
+		}
+		else{
+			boidMan->spawnBoid(1);
+		}
+	}
+	if ((m_keyboardState[DIK_2] & 0x80) && !(m_prevKeyboardState[DIK_2] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(2);
+		}
+		else{
+			boidMan->spawnBoid(2);
+		}
+	}
+	if ((m_keyboardState[DIK_3] & 0x80) && !(m_prevKeyboardState[DIK_3] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(3);
+		}
+		else{
+			boidMan->spawnBoid(3);
+		}
+	}
+	if ((m_keyboardState[DIK_4] & 0x80) && !(m_prevKeyboardState[DIK_4] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(4);
+		}
+		else{
+			boidMan->spawnBoid(4);
+		}
+	}
+	if ((m_keyboardState[DIK_5] & 0x80) && !(m_prevKeyboardState[DIK_5] & 0x80))
+	{
+		if (isShiftHeld){
+			boidMan->deleteBoid(5);
+		}
+		else{
+			boidMan->spawnBoid(5);
+		}
+	}
+
 
 	if ((m_keyboardState[DIK_F1] & 0x80) && !(m_prevKeyboardState[DIK_F1] & 0x80))
 	{
@@ -285,17 +348,73 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		(*it)->Draw(m_DD);
 	}
 
-	
-	string attempt = "13015063";
-
 	// Draw sprite batch stuff
 	m_DD2D->m_Sprites->Begin();
 	for (list<GameObject2D *>::iterator it = m_GameObject2Ds.begin(); it != m_GameObject2Ds.end(); it++)
 	{
 		(*it)->draw(m_DD2D);
 	}
-	m_DD2D->m_Sprites->End();
+	if (SimulationParameters::showDebug){
+		stringstream sstm;
+		int yPos = 10;
+		sstm << "DEBUG MENU";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 40;
 
+		string tempS = "False";
+		if (loadedFile){ tempS = "True"; }
+		sstm << "Loaded from file: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		tempS = "False";
+		if (SimulationParameters::cursorObstacle){ tempS = "True"; }
+		sstm << "Mouse is obstacle: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 40;
+
+		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++){
+			sstm << "# of type [" << (*it).first << "]: " << (*it).second;
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm.str(std::string());
+			yPos += 20;
+		}
+		yPos += 20;
+
+		sstm << "Time to starve: " << SimulationParameters::starvationTime;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "Max speed: " << SimulationParameters::boidMaxSpeed;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "Group size: " << SimulationParameters::groupDistance;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "Group strength: " << SimulationParameters::groupStrength;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "Group direction matching strength: " << SimulationParameters::groupHeading;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		POINT cursorPos;
+		GetCursorPos(&cursorPos);
+		sstm << "X: " << cursorPos.x << " Y: " << cursorPos.y;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+	}
+	m_DD2D->m_Sprites->End();
 	_pd3dImmediateContext->OMSetDepthStencilState(m_States->DepthDefault(), 0);
 
 }

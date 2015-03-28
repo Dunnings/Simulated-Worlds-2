@@ -1,9 +1,9 @@
 groupStrength = 0.7
-groupDistance = 300.0
+groupDistance = 100.0
 groupHeading = 0.4
-boidMaxSpeed = 20.0
+boidMaxSpeed = 10.0
 restTime = 800.0
-mapSize = 600.0
+mapSize = 500.0
 starvationTime = 5000.0
 showDebug = true
 cursorObstacle = false

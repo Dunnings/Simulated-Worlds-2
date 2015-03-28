@@ -30,7 +30,7 @@ public:
 	//Set the direction the BOID is travelling
 	void SetDirection(Vector3 dir) { m_direction = dir; };
 	//Set the type of BOID
-	void SetType(BoidType type) { m_type = type; };
+	void SetType(int type) { m_type = type; };
 	//Set how full the BOID is
 	void SetWeight(int w){ m_weight = w; };
 	
@@ -43,7 +43,7 @@ public:
 	//Get the BOID's current direction
 	Vector3 getDirection() { return m_direction; };
 	//Get the BOID's type
-	BoidType getType() { return m_type; };
+	int getType() { return m_type; };
 	//Get the BOID's alive state
 	bool isAlive() { return m_alive; };
 	//Get the BOID's current weight
@@ -62,12 +62,10 @@ public:
 	//Decrement weight and decrease physical size
 	void Starve();
 protected:
-	//The BOID's type
-	BoidType m_type;
+	//The BOID's hierarchial level
+	int m_type;
 	//Current weight
 	int m_weight = 0;
-	//Current state
-	BoidState m_state;
 	//Current direction
 	Vector3 m_direction;
 	//Is the BOID alive?

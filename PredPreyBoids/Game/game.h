@@ -74,7 +74,7 @@ protected:
 	DrawData2D* m_DD2D;
 
 	//UI
-	UserInterfaceManager* UIManager;
+	bool loadedFile = false;
 	
 };
 

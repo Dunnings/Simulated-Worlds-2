@@ -18,12 +18,11 @@ public:
 
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
-	Boid* spawnBoid(BoidType type);
-	void killBoid(BoidType type);
-	void killBoid(Boid* target);
+	Boid* spawnBoid(int type);
 	void aquireTarget(Boid* pred);
 	Boid* closestPrey(Boid* _pred);
 	void deleteBoid(Boid* b);
+	void deleteBoid(int type);
 private:
 	vector<Boid*> myBoids;
 	Boid* cursor = nullptr;
