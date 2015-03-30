@@ -128,25 +128,29 @@ void Boid::initialize()
 	}
 	
 	//Here I just change the BOIDs to be different colour spheres
-	if (m_type == 1)
+	if (m_type == 0)
 	{
-		SphereTransform(Color(0.0f, 0.0f, 1.0f));
+		SphereTransform(Color(1.0f, 1.0f, 1.0f));
+	}
+	else if (m_type == 1)
+	{
+		ConeTransform(Color(0.0f, 0.0f, 1.0f));
 	}
 	else if (m_type == 2)
 	{
-		SphereTransform(Color(0.0f, 1.0f, 0.0f));
+		ConeTransform(Color(0.0f, 1.0f, 0.0f));
 	}
 	else if (m_type == 3)
 	{
-		SphereTransform(Color(1.0f, 0.0f, 0.0f));
+		ConeTransform(Color(1.0f, 0.0f, 0.0f));
 	}
 	else if (m_type == 4)
 	{
-		SphereTransform(Color(0.0f, 1.0f, 1.0f));
+		ConeTransform(Color(0.0f, 1.0f, 1.0f));
 	}
 	else if (m_type == 5)
 	{
-		SphereTransform(Color(1.0f, 1.0f, 1.0f));
+		ConeTransform(Color(1.0f, 1.0f, 1.0f));
 	}
 
 	//Calculate the normals for the basic lighting in the base shader
@@ -226,6 +230,16 @@ void Boid::Tick(GameData* GD)
 		//Smoothly look toward direction
 		smooth_yaw = (smooth_yaw * 0.9f) + (atan2(m_direction.x, m_direction.z) * GD->dt);
 		m_yaw = smooth_yaw;
+		//Slow down BOID to half max speed
+		if (m_speed > max_speed / 2)
+		{
+			m_speed -= (m_speed - max_speed) * GD->dt;
+		}
+		else if (m_speed < max_speed /2)
+		{
+			m_speed += GD->dt;
+		}
+
 	}
 	VBGO::Tick(GD);
 }

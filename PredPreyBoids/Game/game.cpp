@@ -240,7 +240,8 @@ bool Game::update()
 
 	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))
 	{
-		if (m_GD->GS == GS_PLAY_MAIN_CAM){
+		if (m_GD->GS == GS_PLAY_MAIN_CAM)
+		{
 			SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
 			ShowCursor(!SimulationParameters::cursorObstacle);
 		}
@@ -248,71 +249,78 @@ bool Game::update()
 
 	if ((m_keyboardState[DIK_RETURN] & 0x80) && !(m_prevKeyboardState[DIK_RETURN] & 0x80))
 	{
-		if (m_GD->GS == GS_PLAY_MAIN_CAM){
+		if (m_GD->GS == GS_PLAY_MAIN_CAM)
+		{
 			m_GD->GS = GS_PLAY_TPS_CAM;
 			m_predCamera->changeTarget(boidMan->getHighestBOID());
 		}
-		else{
+		else
+		{
 			m_GD->GS = GS_PLAY_MAIN_CAM;
 		}
 	}
 
+	if ((m_keyboardState[DIK_MINUS] & 0x80) && !(m_prevKeyboardState[DIK_MINUS] & 0x80))
+	{
+		if (spawnPerPress >= 1)
+		{
+			spawnPerPress -= 1;
+		}
+	}
+
+	if ((m_keyboardState[DIK_ADD] & 0x80) && !(m_prevKeyboardState[DIK_ADD] & 0x80))
+	{
+		spawnPerPress += 1;
+	}
+
+	int type = 9999;
+	bool kill = false;
 	bool isShiftHeld = false;
-	if (m_keyboardState[DIK_LSHIFT] & 0x80){
+	if (m_keyboardState[DIK_LSHIFT] & 0x80)
+	{
 		isShiftHeld = true;
 	}
 	if ((m_keyboardState[DIK_0] & 0x80) && !(m_prevKeyboardState[DIK_0] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(0);
-		}
-		else{
-			boidMan->spawnBoid(0);
-		}
+		type = 0;
 	}
 	if ((m_keyboardState[DIK_1] & 0x80) && !(m_prevKeyboardState[DIK_1] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(1);
-		}
-		else{
-			boidMan->spawnBoid(1);
-		}
+		type = 1;
 	}
 	if ((m_keyboardState[DIK_2] & 0x80) && !(m_prevKeyboardState[DIK_2] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(2);
-		}
-		else{
-			boidMan->spawnBoid(2);
-		}
+		type = 2;
 	}
 	if ((m_keyboardState[DIK_3] & 0x80) && !(m_prevKeyboardState[DIK_3] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(3);
-		}
-		else{
-			boidMan->spawnBoid(3);
-		}
+		type = 3;
 	}
 	if ((m_keyboardState[DIK_4] & 0x80) && !(m_prevKeyboardState[DIK_4] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(4);
-		}
-		else{
-			boidMan->spawnBoid(4);
-		}
+		type = 4;
 	}
 	if ((m_keyboardState[DIK_5] & 0x80) && !(m_prevKeyboardState[DIK_5] & 0x80))
 	{
-		if (isShiftHeld){
-			boidMan->deleteBoid(5);
+		type = 5;
+	}
+	if (type != 9999)
+	{
+		if (isShiftHeld)
+		{
+			for (int i = 0; i < spawnPerPress; i++)
+			{
+
+				boidMan->deleteBoid(type);
+			}
 		}
-		else{
-			boidMan->spawnBoid(5);
+		else
+		{
+			for (int i = 0; i < spawnPerPress; i++)
+			{
+
+				boidMan->spawnBoid(type);
+			}
 		}
 	}
 
@@ -427,12 +435,17 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm.str(std::string());
 		yPos += 20;
 
-		sstm << "[1-5] - Spawn BOID";
+		sstm << "[1-5] - Spawn " << spawnPerPress << " BOID(s)";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20;
 
-		sstm << "[Shift + 1-5] - Delete BOID";
+		sstm << "[Shift + 1-5] - Delete " << spawnPerPress << " BOID(s)";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[+/-] Modify spawn per press";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20;
@@ -449,6 +462,11 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 			sstm.str(std::string());
 			yPos += 20;
 		}
+		yPos += 20;
+
+		sstm << "Spawn per key press: " << spawnPerPress;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
 		yPos += 20;
 
 		sstm << "Time to starve: " << SimulationParameters::starvationTime;

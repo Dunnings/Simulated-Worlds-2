@@ -87,7 +87,7 @@ protected:
 	//Force lines
 	myVertex lineVertices[2];
 	//Small function to modify the VB to produce a sphere
-	virtual void SphereTransform(Color c)
+	virtual void ConeTransform(Color c)
 	{
 		for (int i = 0; i< m_numPrims * 3; i++)
 		{
@@ -108,6 +108,20 @@ protected:
 			Matrix rotate = Matrix::CreateRotationX(M_PI / 2);
 			Vector3 newPos = Vector3::Transform(vertPos, transform);
 
+			m_vertices[i].Pos = newPos;
+		}
+	}
+	virtual void SphereTransform(Color c)
+	{
+		for (int i = 0; i< m_numPrims * 3; i++)
+		{
+			Vector3 vertPos = m_vertices[i].Pos;
+			Vector3 spherePos = m_vertices[i].Pos;
+
+			spherePos.Normalize();
+
+			Vector3 newPos = 10.0f *spherePos;
+			m_vertices[i].Color = c;
 			m_vertices[i].Pos = newPos;
 		}
 	}

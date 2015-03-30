@@ -192,7 +192,7 @@ void boidManager::Tick(GameData* GD)
 				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
 				// Bumping into OBSTACLE
 				if (newBoid->getType() == 0){
-					if (dist < newBoid->getSight())
+					if (dist < 20.0f)
 					{
 						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						contactModifier.Normalize();
@@ -246,7 +246,7 @@ void boidManager::Tick(GameData* GD)
 				}
 			}
 		}
-		if (targetHeading != Vector3(0.0f, 0.0f, 0.0f)){
+		if (targetHeading != Vector3(0.0f, 0.0f, 0.0f) && !overrideModifier){
 			currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 			targetHeading /= preyCount;
 			targetHeading.Normalize();
@@ -265,14 +265,10 @@ void boidManager::Tick(GameData* GD)
 				modifier += (toAverage * SimulationParameters::groupStrength);
 			}
 			//Only move in average direction if in inner 50% of group
-			if (toAverage.Length() < SimulationParameters::groupDistance * 0.5){
+			//if (toAverage.Length() < SimulationParameters::groupDistance * 0.5){
 				modifier += (avDir * SimulationParameters::groupHeading);
-			}
-			//Slow down BOID to half max speed
-			if (currentBoid->getSpeed() > currentBoid->getMaxSpeed() / 2)
-			{
-				currentBoid->SetSpeed(avSpeed * 0.9995f);
-			}
+			//}
+			
 			currentBoid->m_grouping = toAverage - m_pos;
 
 		}
