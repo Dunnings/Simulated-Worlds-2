@@ -19,10 +19,10 @@ public:
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
 	Boid* spawnBoid(int type);
-	void aquireTarget(Boid* pred);
-	Boid* closestPrey(Boid* _pred);
 	void deleteBoid(Boid* b);
 	void deleteBoid(int type);
+	Boid* getHighestBOID();
+	void deleteAll();
 private:
 	vector<Boid*> myBoids;
 	Boid* cursor = nullptr;
