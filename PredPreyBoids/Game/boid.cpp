@@ -130,11 +130,23 @@ void Boid::initialize()
 	//Here I just change the BOIDs to be different colour spheres
 	if (m_type == 1)
 	{
-		SphereTransform(Color(0.0f, 1.0f, 1.0f));
+		SphereTransform(Color(0.0f, 0.0f, 1.0f));
 	}
-	if (m_type == 2)
+	else if (m_type == 2)
+	{
+		SphereTransform(Color(0.0f, 1.0f, 0.0f));
+	}
+	else if (m_type == 3)
 	{
 		SphereTransform(Color(1.0f, 0.0f, 0.0f));
+	}
+	else if (m_type == 4)
+	{
+		SphereTransform(Color(0.0f, 1.0f, 1.0f));
+	}
+	else if (m_type == 5)
+	{
+		SphereTransform(Color(1.0f, 1.0f, 1.0f));
 	}
 
 	//Calculate the normals for the basic lighting in the base shader
@@ -166,6 +178,7 @@ Boid::~Boid()
 {
 
 }
+
 
 void Boid::Eat(){
 	//Increase scale by 0.05x

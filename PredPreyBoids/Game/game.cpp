@@ -29,6 +29,68 @@ bool SimulationParameters::cursorObstacle;
 float SimulationParameters::starvationTime;
 bool SimulationParameters::showDebug;
 
+void Game::loadParameters()
+{
+	SimulationParameters para;
+	ifstream parameterFile;
+	parameterFile.open(fileName);
+	if (parameterFile.is_open())
+	{
+		loadedFile = true;
+		while (!parameterFile.eof())
+		{
+			string currentLine;
+			getline(parameterFile, currentLine);
+			if (currentLine.find(" = "))
+			{
+				string parameter;
+				string value;
+				parameter = currentLine.substr(0, currentLine.find(" = "));
+				value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
+
+				if (parameter == "groupStrength")
+				{
+					para.groupStrength = stof(value);
+				}
+				else if (parameter == "groupDistance")
+				{
+					para.groupDistance = stof(value);
+				}
+				else if (parameter == "groupHeading")
+				{
+					para.groupHeading = stof(value);
+				}
+				else if (parameter == "boidMaxSpeed")
+				{
+					para.boidMaxSpeed = stof(value);
+				}
+				else if (parameter == "restTime")
+				{
+					para.restTime = stof(value);
+				}
+				else if (parameter == "mapSize")
+				{
+					para.mapSize = stof(value);
+				}
+				else if (parameter == "starvationTime")
+				{
+					para.starvationTime = stof(value);
+				}
+				else if (parameter == "showDebug")
+				{
+					para.showDebug = (value == "true");
+				}
+				else if (parameter == "cursorObstacle")
+				{
+					para.cursorObstacle = (value == "true");
+				}
+			}
+		}
+		parameterFile.close();
+	}
+}
+
+
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
 {
 	/* initialize random seed: */
@@ -82,62 +144,18 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	para.showDebug = true;
 
 
-	ifstream parameterFile;
-	parameterFile.open("SimulationParameters.dat");
-	if (parameterFile.is_open()){
-		loadedFile = true;
-		while (!parameterFile.eof()){
-			string currentLine;
-			getline(parameterFile, currentLine);
-			if (currentLine.find(" = ")){
-				string parameter;
-				string value;
-				parameter = currentLine.substr(0, currentLine.find(" = "));
-				value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
-				
-				if (parameter == "groupStrength"){
-					para.groupStrength = stof(value);
-				}
-				else if (parameter == "groupDistance"){
-					para.groupDistance = stof(value);
-				}
-				else if (parameter == "groupHeading"){
-					para.groupHeading = stof(value);
-				}
-				else if (parameter == "boidMaxSpeed"){
-					para.boidMaxSpeed = stof(value);
-				}
-				else if (parameter == "restTime"){
-					para.restTime = stof(value);
-				}
-				else if (parameter == "mapSize"){
-					para.mapSize = stof(value);
-				}
-				else if (parameter == "starvationTime"){
-					para.starvationTime = stof(value);
-				}
-				else if (parameter == "showDebug"){
-					para.showDebug = (value == "true");
-				}
-				else if (parameter == "cursorObstacle"){
-					para.cursorObstacle = (value == "true");
-				}
-			}
-		}
-	}
+	loadParameters();
 
 
 
 	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
-
-	player = boidMan->spawnBoid(2);
 	
 	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
 	m_mainCam->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
 	m_GameObjects.push_back(m_mainCam);
 		
-	m_predCamera = new PredCamera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, player, Vector3::Up, Vector3(0.0f, 100.0f, -150.0f));
+	m_predCamera = new PredCamera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Up, Vector3(0.0f, 100.0f, -150.0f));
 	m_predCamera->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
 	m_GameObjects.push_back(m_predCamera);
 	
@@ -231,12 +249,10 @@ bool Game::update()
 	if ((m_keyboardState[DIK_RETURN] & 0x80) && !(m_prevKeyboardState[DIK_RETURN] & 0x80))
 	{
 		if (m_GD->GS == GS_PLAY_MAIN_CAM){
-			player = boidMan->spawnBoid(2);
 			m_GD->GS = GS_PLAY_TPS_CAM;
+			m_predCamera->changeTarget(boidMan->getHighestBOID());
 		}
 		else{
-			boidMan->deleteBoid(player);
-			player = nullptr;
 			m_GD->GS = GS_PLAY_MAIN_CAM;
 		}
 	}
@@ -300,10 +316,25 @@ bool Game::update()
 		}
 	}
 
-
 	if ((m_keyboardState[DIK_F1] & 0x80) && !(m_prevKeyboardState[DIK_F1] & 0x80))
 	{
 		SimulationParameters::showDebug = !SimulationParameters::showDebug;
+	}
+	if ((m_keyboardState[DIK_F5] & 0x80) && !(m_prevKeyboardState[DIK_F5] & 0x80))
+	{
+		loadParameters();
+	}
+	if ((m_keyboardState[DIK_F6] & 0x80) && !(m_prevKeyboardState[DIK_F6] & 0x80))
+	{
+		ifstream parameterFile;
+		parameterFile.open(fileName);
+		string cmd = "notepad.exe " + fileName;
+		system(cmd.c_str());
+		loadParameters();
+	}
+	if ((m_keyboardState[DIK_F9] & 0x80) && !(m_prevKeyboardState[DIK_F9] & 0x80))
+	{
+		boidMan->deleteAll();
 	}
 
 
@@ -376,7 +407,43 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm.str(std::string());
 		yPos += 40;
 
-		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++){
+		sstm << "[F1] - Toggle debug menu";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[F5] - Update parameters from file";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[F6] - Open parameters file";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[F9] - Delete all BOIDs";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[1-5] - Spawn BOID";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[Shift + 1-5] - Delete BOID";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20;
+
+		sstm << "[Enter] - Switch camera";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 40;
+
+		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++)
+		{
 			sstm << "# of type [" << (*it).first << "]: " << (*it).second;
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
@@ -413,6 +480,11 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		GetCursorPos(&cursorPos);
 		sstm << "X: " << cursorPos.x << " Y: " << cursorPos.y;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+	}
+	else
+	{
+		string s = "[F1] - Toggle debug menu";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(s.c_str()), Vector2(10, 10), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 	}
 	m_DD2D->m_Sprites->End();
 	_pd3dImmediateContext->OMSetDepthStencilState(m_States->DepthDefault(), 0);

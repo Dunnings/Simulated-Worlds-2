@@ -1,8 +1,7 @@
-groupStrength = 0.7
+groupStrength = 0.8
 groupDistance = 100.0
-groupHeading = 0.4
-boidMaxSpeed = 10.0
-restTime = 800.0
+groupHeading = 0.1
+boidMaxSpeed = 5.0
 mapSize = 500.0
 starvationTime = 5000.0
 showDebug = true

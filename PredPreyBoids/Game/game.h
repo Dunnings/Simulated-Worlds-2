@@ -49,7 +49,6 @@ protected:
 
 	Light* m_Light; //base light
 
-	Boid* player;
 	boidManager* boidMan;
 
 	list<GameObject *> m_GameObjects; //data structure storing all GameOBjects of this Game
@@ -73,9 +72,10 @@ protected:
 	DrawData* m_DD;
 	DrawData2D* m_DD2D;
 
-	//UI
+	//parameters
 	bool loadedFile = false;
-	
+	void loadParameters();
+	string fileName = "SimulationParameters.dat";
 };
 
 

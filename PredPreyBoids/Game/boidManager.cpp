@@ -96,6 +96,8 @@ void boidManager::deleteBoid(int type){
 	{
 		if ((*it)->getType() == type)
 		{
+			(*it) = nullptr;
+			delete((*it));
 			it = myBoids.erase(it);
 			break;
 		}
@@ -104,6 +106,30 @@ void boidManager::deleteBoid(int type){
 			it++;
 		}
 	}
+}
+
+void boidManager::deleteAll()
+{
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
+	{
+		(*it)->Damage(1000.0f);
+	}
+	myBoids.clear();
+}
+
+Boid* boidManager::getHighestBOID()
+{
+	int type = 0;
+	Boid* toReturn = nullptr;
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
+	{
+		if ((*it)->getType() > type)
+		{
+			toReturn = (*it);
+			type = toReturn->getType();
+		}
+	}
+	return toReturn;
 }
 
 void boidManager::Tick(GameData* GD)
@@ -182,8 +208,8 @@ void boidManager::Tick(GameData* GD)
 					{
 						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						currentBoid->SetDirection(fearModifier);
+						currentBoid->SetSpeed(currentBoid->getMaxSpeed() * currentBoid->getType());
 						overrideModifier = true;
-						currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 					}
 				}
 				//currentBoid.type == newBoid.type 
@@ -216,6 +242,7 @@ void boidManager::Tick(GameData* GD)
 						targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
 						preyCount++;
 					}
+					currentBoid->SetSpeed(currentBoid->getMaxSpeed() * currentBoid->getType());
 				}
 			}
 		}
@@ -234,14 +261,18 @@ void boidManager::Tick(GameData* GD)
 			Vector3 toAverage = currentBoid->GetPos() - avPos;
 			modifier.Normalize();
 			//Only move toward center of group if they are in the outer 40% of the group
-			//if (toAverage.Length() > SimulationParameters::groupDistance * 0.6){
+			if (toAverage.Length() > SimulationParameters::groupDistance * 0.6){
 				modifier += (toAverage * SimulationParameters::groupStrength);
-			//}
-			//Only move in average direction if in outer 50% of group
-			//if (toAverage.Length() > SimulationParameters::groupDistance * 0.5){
+			}
+			//Only move in average direction if in inner 50% of group
+			if (toAverage.Length() < SimulationParameters::groupDistance * 0.5){
 				modifier += (avDir * SimulationParameters::groupHeading);
-			//}
-			currentBoid->SetSpeed(avSpeed);
+			}
+			//Slow down BOID to half max speed
+			if (currentBoid->getSpeed() > currentBoid->getMaxSpeed() / 2)
+			{
+				currentBoid->SetSpeed(avSpeed * 0.9995f);
+			}
 			currentBoid->m_grouping = toAverage - m_pos;
 
 		}
