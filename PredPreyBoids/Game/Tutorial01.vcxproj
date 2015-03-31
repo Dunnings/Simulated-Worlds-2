@@ -356,27 +356,21 @@
     <ClCompile Include="boid.cpp" />
     <ClCompile Include="boidManager.cpp" />
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="CMOGO.cpp" />
-    <ClCompile Include="fileVBGO.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="gameobject.cpp" />
     <ClCompile Include="GameObject2D.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="predCamera.cpp" />
-    <ClCompile Include="turret_base.cpp" />
     <ClCompile Include="Tutorial01.cpp" />
-    <ClCompile Include="VBCube.cpp" />
     <ClCompile Include="VBGO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="boid.h" />
     <ClInclude Include="boidManager.h" />
     <ClInclude Include="camera.h" />
-    <ClInclude Include="CMOGO.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="drawdata.h" />
     <ClInclude Include="DrawData2D.h" />
-    <ClInclude Include="fileVBGO.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="gamedata.h" />
     <ClInclude Include="gameobject.h" />
@@ -386,12 +380,8 @@
     <ClInclude Include="light.h" />
     <ClInclude Include="MyEffectsFactory.h" />
     <ClInclude Include="ObjectList.h" />
-    <ClInclude Include="pillow.h" />
     <ClInclude Include="predCamera.h" />
     <CLInclude Include="resource.h" />
-    <ClInclude Include="SpikedVB.h" />
-    <ClInclude Include="Turret_base.h" />
-    <ClInclude Include="VBCube.h" />
     <ClInclude Include="VBGO.h" />
     <ClInclude Include="vertex.h" />
     <ResourceCompile Include="Tutorial01.rc" />

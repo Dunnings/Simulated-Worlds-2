@@ -14,17 +14,23 @@ class boidManager : public GameObject
 {
 public:
 	boidManager();
-	virtual ~boidManager();
-
+	~boidManager();
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
+	//Create and return a new boid of given type
 	Boid* spawnBoid(int type);
+	//Delete given boid
 	void deleteBoid(Boid* b);
+	//Delete first boid of given type
 	void deleteBoid(int type);
+	//Return the top-most level boid
 	Boid* getHighestBOID();
+	//Delete all boids
 	void deleteAll();
 private:
+	//Vector containing all boids
 	vector<Boid*> myBoids;
+	//Boid used for cursor
 	Boid* cursor = nullptr;
 };
 

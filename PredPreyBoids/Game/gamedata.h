@@ -3,6 +3,7 @@
 #include "gamestate.h"
 #include <dinput.h>
 #include <map>
+#include <d3d11.h>
 
 class UserInterfaceManager;
 class MyEffectFactory;
@@ -26,7 +27,7 @@ struct SimulationParameters
 	static float groupDistance;
 	static float groupHeading;
 	static float boidMaxSpeed;
-	static float restTime;
+	static float obstacleSize;
 	static float mapSize;
 	static bool cursorObstacle;
 	static bool showDebug;

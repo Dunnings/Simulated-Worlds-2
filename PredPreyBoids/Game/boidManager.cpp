@@ -192,7 +192,7 @@ void boidManager::Tick(GameData* GD)
 				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
 				// Bumping into OBSTACLE
 				if (newBoid->getType() == 0){
-					if (dist < 20.0f)
+					if (dist < SimulationParameters::obstacleSize)
 					{
 						Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						contactModifier.Normalize();
@@ -284,7 +284,7 @@ void boidManager::Tick(GameData* GD)
 				centerModifier.Normalize();
 				//Gradient out over 100 units
 				centerModifier *= (((l - (SimulationParameters::mapSize / 2)) / 100.0f));
-				modifier += centerModifier;
+				modifier = centerModifier;
 			}
 
 			currentBoid->SetDirection(currentBoid->getDirection() + modifier);

@@ -1,10 +1,12 @@
 #ifndef _BOID_H_
 #define _BOID_H_
-#include "VBCube.h"
-#include "gamedata.h"
-#include "VBCube.h"
-#include <vector>
+
 #define _USE_MATH_DEFINES
+
+#include "gamedata.h"
+#include "VBGO.h"
+#include "vertex.h"
+#include <vector>
 #include <math.h>
 
 using std::vector;
@@ -14,13 +16,10 @@ class Boid : public VBGO
 public:
 	Boid();
 	~Boid();
-
-	void initialize();
-
-	//CMOGO inherited tick
 	virtual void Tick(GameData* GD);
-	//CMOGO inherited draw
 	virtual void Draw(DrawData* DD);
+	//Create the vertex buffer and initialize the object
+	void initialize();
 	//Set the BOID's current speed
 	void SetSpeed(float speed) { m_speed = speed; };
 	//Set the BOID's maximum speed
@@ -86,7 +85,7 @@ protected:
 	myVertex* m_vertices;
 	//Force lines
 	myVertex lineVertices[2];
-	//Small function to modify the VB to produce a sphere
+	//Small function to modify the VB to produce a coloured cone
 	virtual void ConeTransform(Color c)
 	{
 		for (int i = 0; i< m_numPrims * 3; i++)
@@ -111,6 +110,7 @@ protected:
 			m_vertices[i].Pos = newPos;
 		}
 	}
+	//Small function to modify the VB to produce a coloured sphere
 	virtual void SphereTransform(Color c)
 	{
 		for (int i = 0; i< m_numPrims * 3; i++)

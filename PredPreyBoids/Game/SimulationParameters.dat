@@ -6,3 +6,4 @@ mapSize = 500.0
 starvationTime = 5000.0
 showDebug = true
 cursorObstacle = false
+obstacleSize = 40.0

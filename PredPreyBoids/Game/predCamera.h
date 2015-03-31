@@ -1,23 +1,26 @@
-#ifndef _TPSCAMERA_H_
-#define _TPSCAMERA_H_
+#ifndef _PRED_CAMERA_H_
+#define _PRED_CAMERA_H_
+
 #include "camera.h"
 #include "boid.h"
 #include "gamedata.h"
-//a basic Third person camera which follows a give GameObject at a displacement of _dpos
 
 class PredCamera : public Camera
 {
 public:
 	PredCamera(float _fieldOfView, float _aspectRatio, float _nearPlaneDistance, float _farPlaneDistance, Vector3 _up, Vector3 _dpos);
 	virtual ~PredCamera();
-	Boid* GetTarget(){ return m_targetObject; };
-	void SetTarget(Boid*	_m_targetObject){ m_targetObject = _m_targetObject; };
 	virtual void Tick(GameData* GD);
+	//Return the BOID that this camera is connected to
+	Boid* GetTarget(){ return m_targetObject; };
+	//Set the BOID that this camera is connected to
 	void changeTarget(Boid* _target);
-
 protected:
+	//Target BOID
 	Boid* m_targetObject;
+	//Offset vector
 	Vector3	m_dpos;
+	//Smooothed out yaw
 	float m_aimYaw;
 };
 

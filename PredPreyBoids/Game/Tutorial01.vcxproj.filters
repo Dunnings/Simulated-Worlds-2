@@ -28,34 +28,16 @@
     <CLInclude Include="resource.h">
       <Filter>Base\Resource Files</Filter>
     </CLInclude>
-    <ClInclude Include="CMOGO.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectList.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
     <ClInclude Include="camera.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Turret_base.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
     <ClInclude Include="VBGO.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
-    <ClInclude Include="fileVBGO.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
     <ClInclude Include="light.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="VBCube.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="SpikedVB.h">
-      <Filter>Engine\GameObject Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="pillow.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConstantBuffer.h">
@@ -110,25 +92,13 @@
     <ClCompile Include="Tutorial01.cpp">
       <Filter>Base</Filter>
     </ClCompile>
-    <ClCompile Include="CMOGO.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
     <ClCompile Include="camera.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
-    <ClCompile Include="turret_base.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="VBGO.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
-    <ClCompile Include="fileVBGO.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
     <ClCompile Include="light.cpp">
-      <Filter>Engine\GameObject Source</Filter>
-    </ClCompile>
-    <ClCompile Include="VBCube.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="game.cpp">

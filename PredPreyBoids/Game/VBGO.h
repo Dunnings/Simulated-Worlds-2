@@ -1,32 +1,29 @@
 #ifndef _VB_GO_H_
 #define _VB_GO_H_
+
 #include "gameobject.h"
 #include "ConstantBuffer.h"
-//the base Game Object drawn using a Vertex and Index Buffer
-//all of the main aspects of drawing it have a default which is pointed to by a static pointer
-//this is only used if the version for this object is not Set to nullptr
+
 class VBGO :public GameObject
 {
 public:
 	VBGO();
 	virtual ~VBGO();
-
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
 
+	//Intialise vertex and index buffers
 	static void Init(ID3D11Device* _GD);
+	//Remove unneeded buffers etc
 	static void CleanUp();
-
+	//Update the constant buffer using DrawData
 	static void UpdateConstantBuffer(DrawData* _DD);
-
 protected:
-
 	//Direct X information for the model for this GameObject
 	ID3D11Buffer* m_VertexBuffer;
 	ID3D11Buffer* m_LineVertexBuffer;
 	ID3D11Buffer* m_IndexBuffer;
 	UINT m_numPrims;
-
 	D3D_PRIMITIVE_TOPOLOGY m_topology;
 
 	//default vertexshader
@@ -66,7 +63,7 @@ protected:
 
 	//once populated build a Vertex Buffer
 	void BuildVB(ID3D11Device* _GD, int _numVerts, void* _vertices);
-
+	//once populated build a Vertex Buffer
 	void BuildLineVB(ID3D11Device* _GD, int _numVerts, void* _vertices);
 
 };

@@ -197,8 +197,9 @@ void Boid::Eat(){
 	lastKillTickCount = GetTickCount64();
 }
 void Boid::Starve(){
-	if (m_weight > 0){
-		//Decrease scale by 0.05x
+	//Decrease scale by 0.05x
+	if (m_scale.x > 1.0f)
+	{
 		m_scale.x -= (m_weight * 0.05);
 		m_scale.y -= (m_weight * 0.05);
 		m_scale.z -= (m_weight * 0.05);
