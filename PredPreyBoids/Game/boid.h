@@ -28,6 +28,10 @@ public:
 	void SetSight(float sight) { m_sight = sight; };
 	//Set the direction the BOID is travelling
 	void SetDirection(Vector3 dir) { m_direction = dir; };
+	//Set the grouping direction of the BOID
+	void SetGroupDirection(Vector3 dir) { m_groupDirection = dir; };
+	//Set the grouping heading of the BOID
+	void SetGroupHeading(Vector3 dir) { m_groupHeading = dir; };
 	//Set the type of BOID
 	void SetType(int type) { m_type = type; };
 	//Set how full the BOID is
@@ -41,6 +45,10 @@ public:
 	float getSight() { return m_sight; };
 	//Get the BOID's current direction
 	Vector3 getDirection() { return m_direction; };
+	//Get the BOID's current grouping direction
+	Vector3 getGroupDirection() { return m_groupDirection; };
+	//Get the BOID's current grouping heading
+	Vector3 getGroupHeading() { return m_groupHeading; };
 	//Get the BOID's type
 	int getType() { return m_type; };
 	//Get the BOID's alive state
@@ -48,9 +56,11 @@ public:
 	//Get the BOID's current weight
 	int getWeight(){ return m_weight; };
 	//Get the BOID's smooth yaw
-	float getSmoothYaw(){ return smooth_yaw; };
+	float getSmoothYaw() { return smooth_yaw; };
 	//Get the BOID's scale
 	Vector3 GetScale() { return m_scale; };
+	//Get the BOID's scale
+	float GetFloatScale() { return (m_scale.x + m_scale.y + m_scale.z) / 3; };
 	//Nearest group position
 	Vector3 m_grouping;
 
@@ -67,6 +77,10 @@ protected:
 	int m_weight = 0;
 	//Current direction
 	Vector3 m_direction;
+	//Group direction
+	Vector3 m_groupDirection;
+	//Group heading
+	Vector3 m_groupHeading;
 	//Is the BOID alive?
 	bool m_alive = true;
 	//Current health
@@ -80,7 +94,7 @@ protected:
 	//Value used to smppth out yaw
 	float smooth_yaw = 0.0f;
 	//Time BOID last ate
-	ULONGLONG lastKillTickCount;
+	ULONGLONG lastUpdateTickCount;
 	//Every vertex of this BOID
 	myVertex* m_vertices;
 	//Force lines

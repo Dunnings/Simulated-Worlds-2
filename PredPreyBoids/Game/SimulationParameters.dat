@@ -1,6 +1,6 @@
-groupStrength = 1.0
-groupDistance = 100.0
-groupHeading = 1.0
+groupStrength = 0.3
+groupDistance = 200.0
+groupHeading = 0.7
 boidMaxSpeed = 20.0
 mapSize = 500.0
 starvationTime = 5000.0

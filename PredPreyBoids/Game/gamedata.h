@@ -16,6 +16,7 @@ struct GameData
 	DIMOUSESTATE* mouse; //current mouse state
 	DIMOUSESTATE* prevMouse; //previous mouse state
 	GameState GS; //current game state
+	GameState prePauseGS;
 	static ID3D11Device* p3d;
 	static MyEffectFactory* EF;
 	UserInterfaceManager* UIManager;

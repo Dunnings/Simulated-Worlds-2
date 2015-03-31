@@ -1,4 +1,6 @@
 #include "predCamera.h"
+#include <d3d.h>
+#include <DirectXMath.h>
 
 PredCamera::PredCamera(float _fieldOfView, float _aspectRatio, float _nearPlaneDistance, float _farPlaneDistance, Vector3 _up, Vector3 _dpos)
 	:Camera(_fieldOfView, _aspectRatio, _nearPlaneDistance, _farPlaneDistance, Vector3(0.0f, 0.0f, 0.0f), _up)
