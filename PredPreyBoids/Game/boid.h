@@ -54,7 +54,9 @@ public:
 	//Get the BOID's alive state
 	bool isAlive() { return m_alive; };
 	//Get the BOID's current weight
-	int getWeight(){ return m_weight; };
+	int getWeight() { return m_weight; };
+	//Get the BOID's current health
+	int getHealth() { return m_health; };
 	//Get the BOID's smooth yaw
 	float getSmoothYaw() { return smooth_yaw; };
 	//Get the BOID's scale

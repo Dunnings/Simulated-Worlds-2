@@ -537,6 +537,11 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 			sstm.str(std::string());
 			yPos += 20.0f;
 
+			sstm << "Current health: " << m_predCamera->GetTarget()->getHealth();
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm.str(std::string());
+			yPos += 20.0f;
+
 			sstm << "Current weight: " << m_predCamera->GetTarget()->getWeight();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
