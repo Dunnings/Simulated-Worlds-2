@@ -34,16 +34,15 @@ void Game::loadParameters()
 	SimulationParameters para;
 
 	//Default values
-	para.groupStrength = 1.0f;
-	para.groupDistance = 100.0f;
-	para.groupHeading = 1.0f;
+	para.groupStrength = 0.3f;
+	para.groupDistance = 200.0f;
+	para.groupHeading = 0.7f;
 	para.boidMaxSpeed = 20.0f;
-	para.cursorObstacle = false;
-	para.obstacleSize = 40.0f;
 	para.mapSize = 500.0f;
 	para.starvationTime = 5000.0f;
 	para.showDebug = true;
-
+	para.cursorObstacle = false;
+	para.obstacleSize = 40.0f;
 	ifstream parameterFile;
 	parameterFile.open(fileName);
 	if (parameterFile.is_open())

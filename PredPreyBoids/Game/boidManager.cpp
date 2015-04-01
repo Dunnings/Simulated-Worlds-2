@@ -23,7 +23,7 @@ boidManager::boidManager()
 		{
 			spawnBoid(1);
 		}
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			spawnBoid(2);
 		}
@@ -68,20 +68,26 @@ Boid* boidManager::spawnBoid(int type)
 }
 
 void boidManager::deleteBoid(Boid* b){
+	//If the given BOID is the cursor BOID
 	if (cursor == b){
+		//Delete the cursor BOID
 		delete b;
 		b = nullptr;
 	}
 	else{
+		//Otherwise loop through all BOIDs in myBoids
 		for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 		{
+			//If the current BOID is the given BOID
 			if ((*it) == b)
 			{
+				//Delete this BOID and stop searching
 				delete b;
 				b = nullptr;
 				it = myBoids.erase(it);
 				break;
 			}
+			//Otherwise keep looking
 			else
 			{
 				it++;
@@ -91,10 +97,13 @@ void boidManager::deleteBoid(Boid* b){
 }
 
 void boidManager::deleteBoid(int type){
+	//Loop through all BOIDs in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
+		//If the current BOID is the same type as the given type
 		if ((*it)->getType() == type)
 		{
+			//Delete this BOID and stop searching
 			(*it) = nullptr;
 			delete((*it));
 			it = myBoids.erase(it);
@@ -109,15 +118,20 @@ void boidManager::deleteBoid(int type){
 
 void boidManager::deleteAll()
 {
+	//Loop through all BOIDs in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
+		//Kill the BOID
 		(*it)->Damage(1000.0f);
+		(*it) = nullptr;
 	}
+	//Empty myBoids
 	myBoids.clear();
 }
 
 Boid* boidManager::getHighestBOID()
 {
+	//Start with type 0
 	int type = 0;
 	Boid* toReturn = nullptr;
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)

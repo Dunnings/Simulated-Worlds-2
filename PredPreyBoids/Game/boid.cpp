@@ -232,6 +232,7 @@ void Boid::Tick(GameData* GD)
 			}
 			//Move BOID in direction by new speed
 			m_pos += m_direction * w_speed * GD->dt;
+			//Point BOID in direction of travel
 			m_yaw = atan2(m_direction.x, m_direction.z);
 			//Slow down BOID to half max speed
 			if (m_speed > max_speed / 2)
@@ -250,61 +251,56 @@ void Boid::Tick(GameData* GD)
 
 void Boid::Draw(DrawData* DD)
 {
+	//Draw the BOID
 	VBGO::Draw(DD);
 
+	//If debug mode is on
 	if (SimulationParameters::showDebug)
 	{
+		//Create 2 vertices
+		//One at the object's position
 		lineVertices[0].Pos = Vector3::Zero;
 		lineVertices[0].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+		//One at the direction of travel
 		lineVertices[1].Pos = m_direction * m_speed;
 		lineVertices[1].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
-
+		//Build a line vertex buffer using these two points
 		BuildLineVB(GameData::p3d, 2, lineVertices);
 
 		//Set raster state
 		ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
 		DD->pd3dImmediateContext->RSSetState(useRasterS);
 
-		//Set standard Constant Buffer to match this object
-		Matrix newWorld;
-		Vector3 basicScale = Vector3(1.0f, 1.0f, 1.0f);
-
-		//build up the world matrix depending on the new position of the GameObject
-		//the assumption is that this class will be inherited by the class that ACTUALLY changes this
-		Matrix tempScale = Matrix::CreateScale(basicScale);
-		Matrix tempRot = Matrix::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);//possible not the best way of doing this!
+		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the BOID
+		Matrix tempScale = Matrix::CreateScale(Vector3(1.0f, 1.0f, 1.0f));
+		Matrix tempRot = Matrix::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
 		Matrix tempTrans = Matrix::CreateTranslation(m_pos);
+		Matrix newWorld = tempScale * tempRot * tempTrans;
 
-		newWorld = tempScale * tempRot * tempTrans;
-
+		//Transpose new world matrix onto constant buffer
 		s_pCB->world = newWorld.Transpose();
+		//Transpose new rotation matrix onto constant buffer
 		s_pCB->rot = m_rotMat.Transpose();
 
 		//Set vertex buffer
 		UINT stride = sizeof(myVertex);
 		UINT offSet = 0;
-
 		DD->pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_LineVertexBuffer, &stride, &offSet);
 
-		// Set index buffer
-		//DD->pd3dImmediateContext->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-		//update the Constant Buffer in classes that inherit from this then push to the GPU here
+		//Update the Constant Buffer in classes that inherit from this then push to the GPU here
 		ID3D11Buffer* useCB = m_pConstantBuffer ? m_pConstantBuffer : s_pConstantBuffer;
 		void* useCBData = m_pCB ? m_pCB : s_pCB;
-
 		DD->pd3dImmediateContext->UpdateSubresource(useCB, 0, NULL, useCBData, 0, 0);
 		DD->pd3dImmediateContext->VSSetConstantBuffers(0, 1, &useCB);
 		DD->pd3dImmediateContext->PSSetConstantBuffers(0, 1, &useCB);
 
-		//unless it has it own Set them to the static defaults
-
-		//Set primitive type used
+		//Set primitive type to linelist
 		DD->pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-		//and draw
+		//Then finally draw
 		DD->pd3dImmediateContext->DrawIndexed(2, 0, 0);//number here will need to change depending on the primative topology!
 
+		//Cleanup line vertex buffer
 		if (m_LineVertexBuffer)
 		{
 			m_LineVertexBuffer->Release();
