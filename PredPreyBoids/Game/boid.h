@@ -19,7 +19,7 @@ public:
 	virtual void Tick(GameData* GD);
 	virtual void Draw(DrawData* DD);
 	//Create the vertex buffer and initialize the object
-	void initialize();
+	virtual void initialize();
 	//Set the BOID's current speed
 	void SetSpeed(float speed) { m_speed = speed; };
 	//Set the BOID's maximum speed
