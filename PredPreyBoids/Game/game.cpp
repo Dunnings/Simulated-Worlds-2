@@ -34,7 +34,7 @@ void Game::loadParameters()
 	SimulationParameters para;
 
 	//Default values
-	para.groupStrength = 0.3f;
+	para.groupStrength = 0.0f;
 	para.groupDistance = 200.0f;
 	para.groupHeading = 0.7f;
 	para.boidMaxSpeed = 20.0f;
@@ -43,22 +43,33 @@ void Game::loadParameters()
 	para.showDebug = true;
 	para.cursorObstacle = false;
 	para.obstacleSize = 40.0f;
+	//Create an input file stream using the parameter file name
 	ifstream parameterFile;
+	//Open the file
 	parameterFile.open(fileName);
+	//If the file successfully opened
 	if (parameterFile.is_open())
 	{
+		//Update boolean to track if the file has loaded
 		loadedFile = true;
+		//Loop through each line in the file
 		while (!parameterFile.eof())
 		{
+			//Get the current line of the file
 			string currentLine;
 			getline(parameterFile, currentLine);
+			//If the lane contains an equals
 			if (currentLine.find(" = "))
 			{
+				//Get the parameter (before the =)
 				string parameter;
-				string value;
 				parameter = currentLine.substr(0, currentLine.find(" = "));
+				//Get the value (after the =)
+				string value;
 				value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
 
+				//Check if parameter is equal to any of the parameters in SimulationParameters
+				//If it is then set the parameter to the value
 				if (parameter == "groupStrength")
 				{
 					para.groupStrength = stof(value);
@@ -97,6 +108,7 @@ void Game::loadParameters()
 				}
 			}
 		}
+		//Close the file
 		parameterFile.close();
 	}
 }
@@ -104,9 +116,10 @@ void Game::loadParameters()
 
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
 {
-	/* initialize random seed: */
+	//Initialize random seed
 	srand(time(NULL));
 
+	//Initialize keyboard and direct input
 	m_pKeyboard = nullptr;
 	m_pDirectInput = nullptr;
 
@@ -118,7 +131,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_myEF->SetPath(L"Release\\");
 #endif
 	
-	// Create other render resources here
+	//Create other render resources here
 	m_States=new DirectX::CommonStates(_pd3dDevice);
 
 	//Direct Input Stuff
@@ -127,11 +140,12 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	hr = m_pKeyboard->SetDataFormat(&c_dfDIKeyboard);
 	hr = m_pKeyboard->SetCooperativeLevel(g_hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 
-	// initialize the mouse
+	//Initialize the mouse
 	hr = m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouse, NULL);
 	hr = m_pMouse->SetCooperativeLevel(g_hWnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	hr = m_pMouse->SetDataFormat(&c_dfDIMouse);
 
+	//Initialize game data
 	m_GD = new GameData();
 	m_GD->keyboard = m_keyboardState;
 	m_GD->prevKeyboard = m_prevKeyboardState;
@@ -141,49 +155,53 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->p3d = _pd3dDevice;
 	m_GD->EF = m_myEF;
 	
+	//Load in simulation paramaters
 	loadParameters();
 
+	//Initialize boid manager
 	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
 	
+	//Initialize main camera
 	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
 	m_mainCam->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
 	m_GameObjects.push_back(m_mainCam);
 		
+	//Initialize predator camera
 	m_predCamera = new PredCamera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Up, Vector3(0.0f, 100.0f, -150.0f));
 	m_predCamera->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
 	m_GameObjects.push_back(m_predCamera);
 	
+	//Initialize light
 	m_Light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.4f, 0.1f, 0.1f, 1.0f));
 	m_GameObjects.push_back(m_Light);
 
-	
+	//Initialize 3d device
 	ID3D11DeviceContext* pd3dImmediateContext;
 	_pd3dDevice->GetImmediateContext(&pd3dImmediateContext);
 	
-	// Create DirectXTK spritebatch stuff
+	//Create DirectXTK spritebatch stuff
 	m_DD2D = new DrawData2D();
 	m_DD2D->m_Sprites.reset(new SpriteBatch(pd3dImmediateContext));
 	m_DD2D->m_Font.reset(new SpriteFont(_pd3dDevice, L"italic.spritefont"));
 		
-	//create Draw Data
+	//Create Draw Data
 	m_DD = new DrawData();
 	m_DD->cam = m_mainCam;
 	m_DD->pd3dImmediateContext = pd3dImmediateContext;
 	m_DD->states = m_States;
 	m_DD->light = m_Light;
 
-
-	//initilise the defaults for the VBGOs
+	//Initilise the defaults for the VBGOs
 	VBGO::Init(_pd3dDevice);
-
 }
 
 Game::~Game()
 {
+	//Cleanup VBGO
 	VBGO::CleanUp();
 
-	//tidy away Direct Input Stuff
+	//Tidy away Direct Input Stuff
 	if (m_pMouse)
 	{
 		m_pMouse->Unacquire();
@@ -196,43 +214,40 @@ Game::~Game()
 	}
 	if (m_pDirectInput) m_pDirectInput->Release();
 
-	//get rid of the game objects here
+	//Get rid of the game objects
 	for (list<GameObject *>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
 	{
 		delete (*it);
 	}
-
 	m_GameObjects.clear();
-	//and the 2D ones
+
+	//And the 2D game objects
 	for (list<GameObject2D *>::iterator it = m_GameObject2Ds.begin(); it != m_GameObject2Ds.end(); it++)
 	{
 		delete (*it);
 	}
-
 	m_GameObject2Ds.clear();
 
+	//Delete other stuff
 	delete m_States;
 	delete m_myEF;
 	delete m_GD;
 	delete m_DD;
-
 }
 
 bool Game::update()
 {
+	//Read input
 	ReadKeyboard();
 	ReadMouse();
 
-	if (m_keyboardState[DIK_ESCAPE] & 0x80)
+	//Exit the simulation
+	if (m_keyboardState[DIK_ESCAPE] & 0x80 || m_mouse_state.rgbButtons[2] & 0x80)
 	{
 		return false;
 	}
 
-	if (m_mouse_state.rgbButtons[2] & 0x80)
-	{
-		return false;
-	}
-
+	//Toggle cursor obstacle
 	if ((m_keyboardState[DIK_F2] & 0x80) && !(m_prevKeyboardState[DIK_F2] & 0x80))
 	{
 		if (m_DD->cam == m_mainCam)
@@ -242,6 +257,7 @@ bool Game::update()
 		}
 	}
 
+	//Toggle pause/play
 	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))
 	{
 		if (m_GD->GS == GS_PLAY_PAUSE)
@@ -269,7 +285,14 @@ bool Game::update()
 		}
 	}
 
-	if ((m_keyboardState[DIK_MINUS] & 0x80) && !(m_prevKeyboardState[DIK_MINUS] & 0x80))
+	//Increase spawn per press
+	if (((m_keyboardState[DIK_ADD] & 0x80) && !(m_prevKeyboardState[DIK_ADD] & 0x80)) || ((m_keyboardState[DIK_NUMPADPLUS] & 0x80) && !(m_prevKeyboardState[DIK_NUMPADPLUS] & 0x80)))
+	{
+		spawnPerPress += 1;
+	}
+
+	//Decrease spawn per press
+	if (((m_keyboardState[DIK_MINUS] & 0x80) && !(m_prevKeyboardState[DIK_MINUS] & 0x80)) || ((m_keyboardState[DIK_SUBTRACT] & 0x80) && !(m_prevKeyboardState[DIK_SUBTRACT] & 0x80)))
 	{
 		if (spawnPerPress >= 1)
 		{
@@ -277,18 +300,16 @@ bool Game::update()
 		}
 	}
 
-	if ((m_keyboardState[DIK_ADD] & 0x80) && !(m_prevKeyboardState[DIK_ADD] & 0x80))
-	{
-		spawnPerPress += 1;
-	}
-
+	//Initialize type as high number so it can be used to check if 1-5 was pressed
 	int type = 9999;
-	bool kill = false;
+	//Boolean to decide whether to kill or spawn
 	bool isShiftHeld = false;
+	//If shift is down set boolean to true
 	if (m_keyboardState[DIK_LSHIFT] & 0x80)
 	{
 		isShiftHeld = true;
 	}
+	//Change type based on key pressed
 	if ((m_keyboardState[DIK_0] & 0x80) && !(m_prevKeyboardState[DIK_0] & 0x80))
 	{
 		type = 0;
@@ -313,10 +334,13 @@ bool Game::update()
 	{
 		type = 5;
 	}
+	//If a key was pressed
 	if (type != 9999)
 	{
+		//If killing
 		if (isShiftHeld)
 		{
+			//Kill x BOIDs of type
 			for (int i = 0; i < spawnPerPress; i++)
 			{
 
@@ -325,6 +349,7 @@ bool Game::update()
 		}
 		else
 		{
+			//Spawn x BOIDs of type
 			for (int i = 0; i < spawnPerPress; i++)
 			{
 
@@ -333,14 +358,17 @@ bool Game::update()
 		}
 	}
 
+	//Toggle debug information
 	if ((m_keyboardState[DIK_F1] & 0x80) && !(m_prevKeyboardState[DIK_F1] & 0x80))
 	{
 		SimulationParameters::showDebug = !SimulationParameters::showDebug;
 	}
+	//Reload parameters
 	if ((m_keyboardState[DIK_F5] & 0x80) && !(m_prevKeyboardState[DIK_F5] & 0x80))
 	{
 		loadParameters();
 	}
+	//Open parameters file
 	if ((m_keyboardState[DIK_F6] & 0x80) && !(m_prevKeyboardState[DIK_F6] & 0x80))
 	{
 		ifstream parameterFile;
@@ -349,19 +377,19 @@ bool Game::update()
 		system(cmd.c_str());
 		loadParameters();
 	}
+	//Delete all BOIDs
 	if ((m_keyboardState[DIK_F9] & 0x80) && !(m_prevKeyboardState[DIK_F9] & 0x80))
 	{
 		boidMan->deleteAll();
 	}
 
-
-	//calculate frame time-step dt for passing down to game objects
+	//Calculate frame time-step dt for passing down to game objects
 	DWORD currentTime = GetTickCount();
 	m_GD->dt = min((float)(currentTime - m_playTime) / 1000.0f, 0.1f);
 	m_playTime = currentTime;
 
 
-	//update all objects
+	//Update all objects
 	for (list<GameObject *>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
 	{
 		(*it)->Tick(m_GD);
@@ -370,7 +398,6 @@ bool Game::update()
 	{
 		(*it)->tick(m_GD);
 	}
-
 	return true;
 }
 

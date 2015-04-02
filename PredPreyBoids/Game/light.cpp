@@ -12,3 +12,7 @@ Light::Light(Vector3 _pos, Color _colour, Color _ambientColour)
 Light::~Light()
 {
 }
+
+void Light::Tick(GameData* GD){
+
+}
