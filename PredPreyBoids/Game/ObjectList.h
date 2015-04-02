@@ -7,5 +7,6 @@
 #include "light.h"
 #include "predCamera.h"
 #include "VBGO.h"
+#include "waypoint.h"
 
 #endif

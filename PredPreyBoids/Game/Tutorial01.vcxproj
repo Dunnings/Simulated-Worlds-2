@@ -363,6 +363,7 @@
     <ClCompile Include="predCamera.cpp" />
     <ClCompile Include="Tutorial01.cpp" />
     <ClCompile Include="VBGO.cpp" />
+    <ClCompile Include="waypoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="boid.h" />
@@ -384,6 +385,7 @@
     <CLInclude Include="resource.h" />
     <ClInclude Include="VBGO.h" />
     <ClInclude Include="vertex.h" />
+    <ClInclude Include="waypoint.h" />
     <ResourceCompile Include="Tutorial01.rc" />
   </ItemGroup>
   <ItemGroup>

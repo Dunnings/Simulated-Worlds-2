@@ -82,6 +82,9 @@
     <ClInclude Include="predCamera.h">
       <Filter>Engine\GameObject Headers</Filter>
     </ClInclude>
+    <ClInclude Include="waypoint.h">
+      <Filter>Engine\GameObject Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tutorial01.rc">
@@ -117,6 +120,9 @@
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
     <ClCompile Include="predCamera.cpp">
+      <Filter>Engine\GameObject Source</Filter>
+    </ClCompile>
+    <ClCompile Include="waypoint.cpp">
       <Filter>Engine\GameObject Source</Filter>
     </ClCompile>
   </ItemGroup>

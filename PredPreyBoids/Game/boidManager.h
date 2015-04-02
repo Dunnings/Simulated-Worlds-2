@@ -3,6 +3,7 @@
 
 #include "gameobject.h"
 #include "gamedata.h"
+#include "waypoint.h"
 #include <vector>
 
 using namespace std;
@@ -28,10 +29,16 @@ public:
 	//Delete all boids
 	void deleteAll();
 private:
+	//Vector containing all boids waiting to be spawned
+	vector<Boid*> toSpawn;
 	//Vector containing all boids
 	vector<Boid*> myBoids;
 	//Boid used for cursor
 	Boid* cursor = nullptr;
+	//Waypoints
+	vector<Waypoint*> m_waypoints;
+	//Last spawn time
+	ULONGLONG lastSpawnTime;
 };
 
 #endif

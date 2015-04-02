@@ -25,6 +25,8 @@ float SimulationParameters::groupStrength;
 map<int, int> SimulationParameters::boidCount;
 float SimulationParameters::obstacleSize;
 float SimulationParameters::mapSize;
+bool SimulationParameters::respawnOnFinish;
+bool SimulationParameters::respawnOnDeath;
 bool SimulationParameters::cursorObstacle;
 float SimulationParameters::starvationTime;
 bool SimulationParameters::showDebug;
@@ -42,6 +44,8 @@ void Game::loadParameters()
 	para.starvationTime = 5000.0f;
 	para.showDebug = true;
 	para.cursorObstacle = false;
+	para.respawnOnFinish = true;
+	para.respawnOnDeath = true;
 	para.obstacleSize = 40.0f;
 	//Create an input file stream using the parameter file name
 	ifstream parameterFile;
@@ -106,10 +110,33 @@ void Game::loadParameters()
 				{
 					para.cursorObstacle = (value == "true");
 				}
+				else if (parameter == "respawnOnDeath")
+				{
+					para.cursorObstacle = (value == "true");
+				}
+				else if (parameter == "respawnOnFinish")
+				{
+					para.cursorObstacle = (value == "true");
+				}
 			}
 		}
 		//Close the file
 		parameterFile.close();
+	}
+	else{
+		ofstream outputFile(fileName);
+		outputFile << "writing to file";
+		outputFile << "groupStrength = " << para.groupStrength;
+		outputFile << "groupDistance = " << para.groupDistance;
+		outputFile << "groupHeading = " << para.groupHeading;
+		outputFile << "boidMaxSpeed = " << para.boidMaxSpeed;
+		outputFile << "mapSize = " << para.mapSize;
+		outputFile << "starvationTime = " << para.starvationTime;
+		outputFile << "showDebug = " << para.showDebug;
+		outputFile << "cursorObstacle = " << para.cursorObstacle;
+		outputFile << "respawnOnFinish = " << para.respawnOnFinish;
+		outputFile << "respawnOnDeath = " << para.respawnOnDeath;
+		outputFile << "obstacleSize = " << para.obstacleSize;
 	}
 }
 
@@ -285,16 +312,33 @@ bool Game::update()
 		}
 	}
 
+	//Zoom out
+	if ((m_keyboardState[DIK_UPARROW] & 0x80))
+	{
+		if (m_DD->cam == m_mainCam){
+			if (m_mainCam->GetPos().y > 0.0f){
+				m_mainCam->SetPos(m_mainCam->GetPos() - Vector3(0.0f, 100.0f, 0.0f));
+			}
+		}
+	}
+
+	if ((m_keyboardState[DIK_DOWNARROW] & 0x80))
+	{
+		if (m_DD->cam == m_mainCam){
+			m_mainCam->SetPos(m_mainCam->GetPos() + Vector3(0.0f, 100.0f, 0.0f));
+		}
+	}
+
 	//Increase spawn per press
-	if (((m_keyboardState[DIK_ADD] & 0x80) && !(m_prevKeyboardState[DIK_ADD] & 0x80)) || ((m_keyboardState[DIK_NUMPADPLUS] & 0x80) && !(m_prevKeyboardState[DIK_NUMPADPLUS] & 0x80)))
+	if (m_keyboardState[DIK_ADD] & 0x80 || m_keyboardState[DIK_NUMPADPLUS] & 0x80)
 	{
 		spawnPerPress += 1;
 	}
 
 	//Decrease spawn per press
-	if (((m_keyboardState[DIK_MINUS] & 0x80) && !(m_prevKeyboardState[DIK_MINUS] & 0x80)) || ((m_keyboardState[DIK_SUBTRACT] & 0x80) && !(m_prevKeyboardState[DIK_SUBTRACT] & 0x80)))
+	if (m_keyboardState[DIK_SUBTRACT] & 0x80 || m_keyboardState[DIK_MINUS] & 0x80)
 	{
-		if (spawnPerPress >= 1)
+		if (spawnPerPress > 1)
 		{
 			spawnPerPress -= 1;
 		}

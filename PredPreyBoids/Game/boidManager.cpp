@@ -9,6 +9,30 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
+
+	lastSpawnTime = GetTickCount64();
+
+	Waypoint* start = new Waypoint;
+	start->SetPos(Vector3(-500.0f, 0.0f, -300.0f));
+	start->setMyType(waypointType::start);
+	start->setTypeToAffect(1);
+	start->initialize();
+	m_waypoints.push_back(start);
+	Waypoint* finish = new Waypoint;
+	finish->SetPos(Vector3(500.0f, 0.0f, 300.0f));
+	finish->setMyType(waypointType::finish);
+	finish->setTypeToAffect(1);
+	finish->setAreaOfInfluence(100.0f);
+	finish->initialize();
+	m_waypoints.push_back(finish);
+	Waypoint* outpost = new Waypoint;
+	outpost->SetPos(Vector3(0.0f, 0.0f, 0.0f));
+	outpost->setMyType(waypointType::outpost);
+	outpost->setTypeToAffect(2);
+	outpost->initialize();
+	m_waypoints.push_back(outpost);
+
+
 	//If given a boidcount then generate boids based on this
 	if (SimulationParameters::boidCount.size() > 0){
 		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++){
@@ -41,15 +65,29 @@ Boid* boidManager::spawnBoid(int type)
 	Boid* newBoid = new Boid();
 	//Set the max speed to the pre-determined value
 	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
-	//Create four random floats between -1.0 and 1.0 
-	float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-	float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-	float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-	float r4 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-	//Set the BOID position to a random location within pre-determined map bounds
-	newBoid->SetPos(Vector3(r1 * SimulationParameters::mapSize * 0.5f, 0.0f, r2* SimulationParameters::mapSize * 0.5f));
-	//Set direction randomly
-	newBoid->SetDirection(Vector3(r3, 0.0f, r4));
+
+	//If there is a start position set, spawn there
+	bool startSet = false;
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+		if ((*it)->getMyType() == waypointType::start){
+			if ((*it)->getTypeToAffect() == type){
+				newBoid->SetPos((*it)->GetPos());
+				startSet = true;
+			}
+		}
+	}
+	
+	if(!startSet){
+		//Create four random floats between -1.0 and 1.0 
+		float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		float r4 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
+		//Set the BOID position to a random location within pre-determined map bounds
+		newBoid->SetPos(Vector3(r1 * SimulationParameters::mapSize * 0.5f, 0.0f, r2* SimulationParameters::mapSize * 0.5f));
+		//Set direction randomly
+		newBoid->SetDirection(Vector3(r3, 0.0f, r4));
+	}
 	//Set speed to half max speed
 	newBoid->SetSpeed(((SimulationParameters::boidMaxSpeed*type) / 2));
 	//Set the BOID type
@@ -62,7 +100,7 @@ Boid* boidManager::spawnBoid(int type)
 		newBoid->SetScale(0.6f);
 	}
 	//Add BOID to manager's vector
-	myBoids.push_back(newBoid);
+	toSpawn.push_back(newBoid);
 	//Return the created BOID
 	return newBoid;
 }
@@ -125,8 +163,17 @@ void boidManager::deleteAll()
 		(*it)->Damage(1000.0f);
 		(*it) = nullptr;
 	}
+	//Loop through all BOIDs in toSpawn
+	for (vector<Boid*>::iterator it = toSpawn.begin(); it != toSpawn.end(); it++)
+	{
+		//Kill the BOID
+		(*it)->Damage(1000.0f);
+		(*it) = nullptr;
+	}
 	//Empty myBoids
 	myBoids.clear();
+	//Empty toSpawn
+	toSpawn.clear();
 }
 
 Boid* boidManager::getHighestBOID()
@@ -153,6 +200,15 @@ Boid* boidManager::getHighestBOID()
 
 void boidManager::Tick(GameData* GD)
 {
+	if (toSpawn.size() > 0){
+		if (GetTickCount64() - lastSpawnTime > 100.0f){
+			Boid* currentBoid = toSpawn.front();
+			myBoids.push_back(toSpawn.front());
+			toSpawn.erase(toSpawn.begin());
+			lastSpawnTime = GetTickCount64();
+		}
+	}
+
 	//If the simulation is running
 	if (GD->GS == GS_PLAY_PLAY)
 	{
@@ -303,15 +359,26 @@ void boidManager::Tick(GameData* GD)
 							//If the new BOID is dead
 							if (!newBoid->isAlive())
 							{
+								if (SimulationParameters::respawnOnDeath){
+									spawnBoid(newBoid->getType());
+								}
 								//Current BOID has just eaten
 								currentBoid->Eat();
 							}
 						}
 						else
 						{
-							//Add the vector from the current BOID to the new BOID multiplied by 1/d*d to targetHeading where d is the distance between the BOIDs
-							targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
-							preyCount++;
+							for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+								if ((*it)->getMyType() == waypointType::outpost){
+									if ((*it)->getTypeToAffect() == currentBoid->getType()){
+										if ((newBoid->GetPos() - (*it)->GetPos()).Length() < (*it)->getAreaOfInfluence()){
+											//Add the vector from the current BOID to the new BOID multiplied by 1/d*d to targetHeading where d is the distance between the BOIDs
+											targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
+											preyCount++;
+										}
+									}
+								}
+							}
 						}
 						//Set the current BOID's speed to it's max speed
 						currentBoid->SetSpeed(currentBoid->getMaxSpeed());
@@ -360,16 +427,54 @@ void boidManager::Tick(GameData* GD)
 			{
 				//Normalize the modifier
 				modifier.Normalize();
-				//Create a vector from the current BOID to 0,0,0
-				Vector3 centerModifier = Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos();
-				//If the BOID is outside the map
-				if (centerModifier.Length() > (SimulationParameters::mapSize / 2))
-				{
-					//Normalize the center vector
-					centerModifier.Normalize();
-					//Set the modifier to the center modifier
-					modifier = centerModifier;
+				
+				bool nothingToDo = true;
+				//If there is a finish point for this BOID then add it to the modifier
+				for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+					if ((*it)->getMyType() == waypointType::finish){
+						if ((*it)->getTypeToAffect() == currentBoid->getType()){
+							nothingToDo = false;
+							if ((*it)->returnToward(currentBoid).Length() < (*it)->getAreaOfInfluence()){
+								if (SimulationParameters::respawnOnFinish){
+									spawnBoid(currentBoid->getType());
+									currentBoid->Damage(100.0f);
+								}
+							}
+							else{
+								modifier += 0.5f * (*it)->returnNormalizedToward(currentBoid);
+							}
+						}
+					}
 				}
+				//If there is no finish, check if there is an outpost the current BOID should go to
+				if (nothingToDo){
+					for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+						if ((*it)->getMyType() == waypointType::outpost){
+							if ((*it)->getTypeToAffect() == currentBoid->getType()){
+								if ((*it)->returnToward(currentBoid).Length() > (*it)->getAreaOfInfluence()){
+									//Set the current BOID's direction to the center modifier
+									currentBoid->SetDirection((*it)->returnNormalizedToward(currentBoid));
+									modifier = Vector3::Zero; 
+								}
+								nothingToDo = false;
+							}
+						}
+					}
+				}
+				//If there is still nothing to do, make sure I'm near the center of the screen
+				if (nothingToDo){
+					//Create a vector from the current BOID to 0,0,0
+					Vector3 centerModifier = Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos();
+					//If the BOID is outside the map
+					if (centerModifier.Length() > (SimulationParameters::mapSize / 2))
+					{
+						//Normalize the center vector
+						centerModifier.Normalize();
+						//Set the modifier to the center modifier
+						modifier = centerModifier;
+					}
+				}
+
 				//Add modifier to the BOID's current direction
 				currentBoid->SetDirection(currentBoid->getDirection() + modifier);
 				//Tick the current BOID
@@ -388,6 +493,12 @@ void boidManager::Tick(GameData* GD)
 		//Update simulation parameters with boidCount
 		SimulationParameters::boidCount = boidCount;
 	}
+
+	//Loop through each checkpoint
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+		//Draw this checkpoint
+		(*it)->Tick(GD);
+	}
 }
 
 void boidManager::Draw(DrawData* DD)
@@ -396,6 +507,11 @@ void boidManager::Draw(DrawData* DD)
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); ++it)
 	{
 		//Draw this BOID
+		(*it)->Draw(DD);
+	}
+	//Loop through each checkpoint
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+		//Draw this checkpoint
 		(*it)->Draw(DD);
 	}
 }
