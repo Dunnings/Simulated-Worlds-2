@@ -1,4 +1,5 @@
 #include "waypoint.h"
+#include "drawdata.h"
 
 Waypoint::Waypoint(){
 
@@ -14,7 +15,96 @@ void Waypoint::Tick(GameData* GD)
 }
 void Waypoint::Draw(DrawData* DD)
 { 
-	VBGO::Draw(DD); 
+	if (SimulationParameters::showDebug)
+	{
+		VBGO::Draw(DD);
+
+		int sides = 100;
+		float Angle = (360.0f / sides) * (XM_PI/180);
+
+		Vector3 vec(areaOfInfluence * cos(Angle), 0.0f, areaOfInfluence * sin(Angle));
+		Vector3 rot;
+		int x = 0;
+
+		Color c;
+		if (myType == waypointType::start){
+			c = Color(0.0f, 1.0f, 0.0f);
+		}
+		else if (myType == waypointType::outpost){
+			c = Color(0.0f, 0.0f, 1.0f);
+		}
+		else if (myType == waypointType::finish){
+			c = Color(1.0f, 0.0f, 0.0f);
+		}
+
+		for (unsigned short i = 0; i <= sides; ++i)
+		{
+			rot = Vector3(areaOfInfluence * cos(Angle * (i+1)), 0.0f, areaOfInfluence * sin(Angle * (i+1)));
+			myVertex newVertex1;
+			myVertex newVertex2;
+			newVertex1.Pos = vec;
+			newVertex1.Color = c;
+			++x;
+			newVertex2.Pos = rot;
+			newVertex2.Color = c;
+			++x;
+			vec = rot;
+			lineVertices.push_back(newVertex1);
+			lineVertices.push_back(newVertex2);
+		}
+
+		myVertex* vertexArray = new myVertex[x];
+		int i = 0;
+
+		for (vector<myVertex>::iterator it = lineVertices.begin(); it != lineVertices.end(); ++it){
+			vertexArray[i] = (*it);
+			++i;
+		}
+
+		//Build a line vertex buffer using these two points
+		BuildLineVB(GameData::p3d, x, vertexArray);
+
+		//Set raster state
+		ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
+		DD->pd3dImmediateContext->RSSetState(useRasterS);
+
+		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the BOID
+		Matrix tempScale = Matrix::CreateScale(Vector3(1.0f, 1.0f, 1.0f));
+		Matrix tempRot = Matrix::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
+		Matrix tempTrans = Matrix::CreateTranslation(m_pos);
+		Matrix newWorld = tempScale * tempRot * tempTrans;
+
+		//Transpose new world matrix onto constant buffer
+		s_pCB->world = newWorld.Transpose();
+		//Transpose new rotation matrix onto constant buffer
+		s_pCB->rot = m_rotMat.Transpose();
+
+		//Set vertex buffer
+		UINT stride = sizeof(myVertex);
+		UINT offSet = 0;
+		DD->pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_LineVertexBuffer, &stride, &offSet);
+
+		//Update the Constant Buffer in classes that inherit from this then push to the GPU here
+		ID3D11Buffer* useCB = m_pConstantBuffer ? m_pConstantBuffer : s_pConstantBuffer;
+		void* useCBData = m_pCB ? m_pCB : s_pCB;
+		DD->pd3dImmediateContext->UpdateSubresource(useCB, 0, NULL, useCBData, 0, 0);
+		DD->pd3dImmediateContext->VSSetConstantBuffers(0, 1, &useCB);
+		DD->pd3dImmediateContext->PSSetConstantBuffers(0, 1, &useCB);
+
+		//Set primitive type to linelist
+		DD->pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		//Then finally draw
+		DD->pd3dImmediateContext->DrawIndexed(x, 0, 0);//number here will need to change depending on the primative topology!
+
+		//Cleanup line vertex buffer
+		if (m_LineVertexBuffer)
+		{
+			m_LineVertexBuffer->Release();
+			m_LineVertexBuffer = nullptr;
+		}
+		lineVertices.clear();
+	}
 }
 
 
@@ -36,14 +126,20 @@ void Waypoint::initialize()
 	}
 
 	Color c = Color(1.0f, 1.0f, 1.0f);
-	if (myType == waypointType::start){
-		c = Color(0.0f, 1.0f, 0.0f);
-	}
-	else if (myType == waypointType::outpost){
+	if (typeToAffect == 1){
 		c = Color(0.0f, 0.0f, 1.0f);
 	}
-	else if (myType == waypointType::finish){
+	else if (myType == 2){
+		c = Color(0.0f, 1.0f, 0.0f);
+	}
+	else if (myType == 3){
 		c = Color(1.0f, 0.0f, 0.0f);
+	}
+	else if (myType == 4){
+		c = Color(0.0f, 1.0f, 1.0f);
+	}
+	else if (myType == 5){
+		c = Color(1.0f, 0.0f, 1.0f);
 	}
 
 	//In each loop create the two traingles for the matching sub-square on each of the six faces

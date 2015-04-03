@@ -28,6 +28,7 @@ struct SimulationParameters
 	static float boidMaxSpeed; //Max speed of type 1 BOID
 	static float obstacleSize; //Sphere of influence for obstacles
 	static float mapSize; //Map bounds
+	static float spawnDelay; //How often do BOIDs spawn
 	static bool respawnOnFinish; //Once the BOID has reached it's finish should it respawn?
 	static bool respawnOnDeath; //If killed, should the BOID respawn?
 	static bool cursorObstacle; //Is the cursor an obstacle

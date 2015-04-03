@@ -99,8 +99,8 @@ protected:
 	ULONGLONG lastUpdateTickCount;
 	//Every vertex of this BOID
 	myVertex* m_vertices;
-	//Force lines
-	myVertex lineVertices[2];
+	//Force lines array
+	myVertex* lineVertices;
 	//Small function to modify the VB to produce a coloured cone
 	virtual void ConeTransform(Color c)
 	{

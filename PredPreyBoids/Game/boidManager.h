@@ -28,6 +28,12 @@ public:
 	Boid* getHighestBOID();
 	//Delete all boids
 	void deleteAll();
+	//Create a waypoint
+	void addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi);
+	void addWaypoint(Waypoint* w);
+	void deleteAllWaypoints();
+	void loadMap();
+	string mapFileName = "levelData.dat";
 private:
 	//Vector containing all boids waiting to be spawned
 	vector<Boid*> toSpawn;

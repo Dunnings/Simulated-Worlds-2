@@ -148,7 +148,7 @@ void Boid::initialize()
 	}
 	else if (m_type == 5)
 	{
-		ConeTransform(Color(1.0f, 1.0f, 1.0f));
+		ConeTransform(Color(1.0f, 0.0f, 1.0f));
 	}
 
 	//Calculate the normals for the basic lighting in the base shader
@@ -259,11 +259,19 @@ void Boid::Draw(DrawData* DD)
 	{
 		//Create 2 vertices
 		//One at the object's position
-		lineVertices[0].Pos = Vector3::Zero;
-		lineVertices[0].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+		myVertex newVertex1;
+		newVertex1.Pos = Vector3::Zero;
+		newVertex1.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 		//One at the direction of travel
-		lineVertices[1].Pos = m_direction * m_speed;
-		lineVertices[1].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+		myVertex newVertex2;
+		newVertex2.Pos = m_direction * m_speed;
+		newVertex2.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+
+		myVertex* lineVertices = new myVertex[2];
+
+		lineVertices[0] = (newVertex1);
+		lineVertices[1] = (newVertex2);
+
 		//Build a line vertex buffer using these two points
 		BuildLineVB(GameData::p3d, 2, lineVertices);
 

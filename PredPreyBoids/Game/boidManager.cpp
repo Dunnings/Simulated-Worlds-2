@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iterator>
 #include <map>
+#include <istream>
+#include <fstream>
 
 ID3D11Device* GameData::p3d;
 MyEffectFactory* GameData::EF;
@@ -10,28 +12,8 @@ MyEffectFactory* GameData::EF;
 boidManager::boidManager()
 {
 
+	loadMap();
 	lastSpawnTime = GetTickCount64();
-
-	Waypoint* start = new Waypoint;
-	start->SetPos(Vector3(-500.0f, 0.0f, -300.0f));
-	start->setMyType(waypointType::start);
-	start->setTypeToAffect(1);
-	start->initialize();
-	m_waypoints.push_back(start);
-	Waypoint* finish = new Waypoint;
-	finish->SetPos(Vector3(500.0f, 0.0f, 300.0f));
-	finish->setMyType(waypointType::finish);
-	finish->setTypeToAffect(1);
-	finish->setAreaOfInfluence(100.0f);
-	finish->initialize();
-	m_waypoints.push_back(finish);
-	Waypoint* outpost = new Waypoint;
-	outpost->SetPos(Vector3(0.0f, 0.0f, 0.0f));
-	outpost->setMyType(waypointType::outpost);
-	outpost->setTypeToAffect(2);
-	outpost->initialize();
-	m_waypoints.push_back(outpost);
-
 
 	//If given a boidcount then generate boids based on this
 	if (SimulationParameters::boidCount.size() > 0){
@@ -59,6 +41,99 @@ boidManager::~boidManager()
 
 }
 
+
+void boidManager::loadMap(){
+	ifstream mapFile;
+	//Open the file
+	mapFile.open(mapFileName);
+	//If the file successfully opened
+	if (mapFile.is_open())
+	{
+		//Loop through each line in the file
+		while (!mapFile.eof())
+		{
+			//Get the current line of the file
+			string currentLine;
+			getline(mapFile, currentLine);
+
+			//We have reached a waypoint declaration
+			if (currentLine == "<waypoint>"){
+				Waypoint* w = new Waypoint;
+				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
+				while (currentLine != "</waypoint>" && !mapFile.eof()){
+					//Move to next line
+					getline(mapFile, currentLine);
+					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos){
+						int start = currentLine.find("<x>") + 3;
+						int end = currentLine.find("</x>");
+						pos.x = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos){
+						int start = currentLine.find("<y>") + 3;
+						int end = currentLine.find("</y>");
+						pos.y = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos){
+						int start = currentLine.find("<z>") + 3;
+						int end = currentLine.find("</z>");
+						pos.z = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<size>") != string::npos && currentLine.find("</size>") != string::npos){
+						int start = currentLine.find("<size>") + 6;
+						int end = currentLine.find("</size>");
+						w->setAreaOfInfluence(stof(currentLine.substr(start, end - start)));
+					}
+					else if (currentLine.find("<type>") != string::npos && currentLine.find("</type>") != string::npos){
+						int start = currentLine.find("<type>") + 6;
+						int end = currentLine.find("</type>");
+						string type = (currentLine.substr(start, end - start));
+						if (type == "start"){
+							w->setMyType(waypointType::start);
+						}
+						else if (type == "outpost"){
+							w->setMyType(waypointType::outpost);
+						}
+						else if (type == "finish"){
+							w->setMyType(waypointType::finish);
+						}
+					}
+					else if (currentLine.find("<typeToAffect>") != string::npos && currentLine.find("</typeToAffect>") != string::npos){
+						int start = currentLine.find("<typeToAffect>") + 14;
+						int end = currentLine.find("</typeToAffect>");
+						w->setTypeToAffect(stoi((currentLine.substr(start, end - start))));
+					}
+				}
+				w->SetPos(pos);
+				addWaypoint(w);
+			}
+		}
+	}
+}
+
+
+void boidManager::addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi){
+	Waypoint* newW = new Waypoint;
+	newW->SetPos(_pos);
+	newW->setMyType(_type);
+	newW->setTypeToAffect(_affects);
+	newW->setAreaOfInfluence(_aoi);
+	newW->initialize();
+	m_waypoints.push_back(newW);
+}
+
+void boidManager::addWaypoint(Waypoint* w){
+	w->initialize();
+	m_waypoints.push_back(w);
+}
+
+void boidManager::deleteAllWaypoints(){
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+		delete((*it));
+		(*it) = nullptr;
+	}
+	m_waypoints.clear();
+}
+
 Boid* boidManager::spawnBoid(int type)
 {
 	//Dynamically create a new BOID
@@ -68,14 +143,31 @@ Boid* boidManager::spawnBoid(int type)
 
 	//If there is a start position set, spawn there
 	bool startSet = false;
+	vector<Waypoint*> startWaypoints;
+
 	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
 		if ((*it)->getMyType() == waypointType::start){
 			if ((*it)->getTypeToAffect() == type){
-				newBoid->SetPos((*it)->GetPos());
-				startSet = true;
+				startWaypoints.push_back((*it));
 			}
 		}
 	}
+	int random = 0;
+	if (startWaypoints.size() > 1){
+		random = rand() % (startWaypoints.size() + 1);
+	}
+	int i = 0;
+	for (vector<Waypoint*>::iterator it = startWaypoints.begin(); it != startWaypoints.end(); it++){
+		if (i == random){
+			float r1 = ((*it)->GetPos().x - (*it)->getAreaOfInfluence()) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (((*it)->GetPos().x + (*it)->getAreaOfInfluence()) - ((*it)->GetPos().x - (*it)->getAreaOfInfluence()))));
+			float r2 = ((*it)->GetPos().z - (*it)->getAreaOfInfluence()) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (((*it)->GetPos().z + (*it)->getAreaOfInfluence()) - ((*it)->GetPos().z - (*it)->getAreaOfInfluence()))));
+			newBoid->SetPos(Vector3(r1, 0.0f, r2));
+			startSet = true;
+			break;
+		}
+		i++;
+	}
+	
 	
 	if(!startSet){
 		//Create four random floats between -1.0 and 1.0 
@@ -201,7 +293,7 @@ Boid* boidManager::getHighestBOID()
 void boidManager::Tick(GameData* GD)
 {
 	if (toSpawn.size() > 0){
-		if (GetTickCount64() - lastSpawnTime > 100.0f){
+		if (GetTickCount64() - lastSpawnTime > SimulationParameters::spawnDelay){
 			Boid* currentBoid = toSpawn.front();
 			myBoids.push_back(toSpawn.front());
 			toSpawn.erase(toSpawn.begin());

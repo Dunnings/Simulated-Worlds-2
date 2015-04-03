@@ -25,6 +25,7 @@ float SimulationParameters::groupStrength;
 map<int, int> SimulationParameters::boidCount;
 float SimulationParameters::obstacleSize;
 float SimulationParameters::mapSize;
+float SimulationParameters::spawnDelay;
 bool SimulationParameters::respawnOnFinish;
 bool SimulationParameters::respawnOnDeath;
 bool SimulationParameters::cursorObstacle;
@@ -42,10 +43,11 @@ void Game::loadParameters()
 	para.boidMaxSpeed = 20.0f;
 	para.mapSize = 500.0f;
 	para.starvationTime = 5000.0f;
+	para.spawnDelay = 0.0f;
 	para.showDebug = true;
 	para.cursorObstacle = false;
 	para.respawnOnFinish = true;
-	para.respawnOnDeath = true;
+	para.respawnOnDeath = false;
 	para.obstacleSize = 40.0f;
 	//Create an input file stream using the parameter file name
 	ifstream parameterFile;
@@ -101,6 +103,10 @@ void Game::loadParameters()
 				else if (parameter == "starvationTime")
 				{
 					para.starvationTime = stof(value);
+				}
+				else if (parameter == "spawnDelay")
+				{
+					para.spawnDelay = stof(value);
 				}
 				else if (parameter == "showDebug")
 				{
@@ -188,7 +194,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	//Initialize boid manager
 	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
-	
+
 	//Initialize main camera
 	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
 	m_mainCam->SetPos(Vector3(0.0f, 1000.0f, 100.0f));
@@ -200,7 +206,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GameObjects.push_back(m_predCamera);
 	
 	//Initialize light
-	m_Light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.4f, 0.1f, 0.1f, 1.0f));
+	m_Light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(1.0f, 1.0f, 1.0f, 1.0f));
 	m_GameObjects.push_back(m_Light);
 
 	//Initialize 3d device
@@ -415,11 +421,23 @@ bool Game::update()
 	//Open parameters file
 	if ((m_keyboardState[DIK_F6] & 0x80) && !(m_prevKeyboardState[DIK_F6] & 0x80))
 	{
-		ifstream parameterFile;
-		parameterFile.open(fileName);
 		string cmd = "notepad.exe " + fileName;
 		system(cmd.c_str());
 		loadParameters();
+	}
+	//Reload wayPoints
+	if ((m_keyboardState[DIK_F7] & 0x80) && !(m_prevKeyboardState[DIK_F7] & 0x80))
+	{
+		boidMan->deleteAllWaypoints();
+		boidMan->loadMap();
+	}
+	//Open map file
+	if ((m_keyboardState[DIK_F8] & 0x80) && !(m_prevKeyboardState[DIK_F8] & 0x80))
+	{
+		boidMan->deleteAllWaypoints();
+		string cmd = "notepad.exe " + boidMan->mapFileName;
+		system(cmd.c_str());
+		boidMan->loadMap();
 	}
 	//Delete all BOIDs
 	if ((m_keyboardState[DIK_F9] & 0x80) && !(m_prevKeyboardState[DIK_F9] & 0x80))
@@ -516,6 +534,16 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm.str(std::string());
 		yPos += 20.0f;
 
+		sstm << "[F7] - Update waypoints from file";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "[F8] - Open waypoints file";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
 		sstm << "[F9] - Delete all BOIDs";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
@@ -556,6 +584,11 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm.str(std::string());
 		yPos += 20.0f;
 
+		sstm << "Time between spawns: " << SimulationParameters::spawnDelay;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
 		sstm << "Time to starve: " << SimulationParameters::starvationTime;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
@@ -577,6 +610,20 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		yPos += 20.0f;
 
 		sstm << "Group direction matching strength: " << SimulationParameters::groupHeading;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		tempS = "False";
+		if (SimulationParameters::respawnOnDeath){ tempS = "True"; }
+		sstm << "Respawn on death: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		tempS = "False";
+		if (SimulationParameters::respawnOnFinish){ tempS = "True"; }
+		sstm << "Respawn on finish: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 40.0f;

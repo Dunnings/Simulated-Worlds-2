@@ -21,10 +21,11 @@ public:
 	void setTypeToAffect(int _newType){ typeToAffect = _newType; };
 	int getMyType(){ return myType; }
 	void setMyType(waypointType _newType){ myType = _newType; };
-	void setAreaOfInfluence(float aoi){ areaOfInfluence = aoi; }
+	void setAreaOfInfluence(float aoi){ areaOfInfluence = aoi; };
 	void Tick(GameData* GD);
 	void Draw(DrawData* DD);
 	virtual void initialize();
+	vector<myVertex> lineVertices;
 private:
 	int typeToAffect;
 	waypointType myType;
