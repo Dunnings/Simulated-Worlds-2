@@ -118,11 +118,11 @@ void Game::loadParameters()
 				}
 				else if (parameter == "respawnOnDeath")
 				{
-					para.cursorObstacle = (value == "true");
+					para.respawnOnDeath = (value == "true");
 				}
 				else if (parameter == "respawnOnFinish")
 				{
-					para.cursorObstacle = (value == "true");
+					para.respawnOnFinish = (value == "true");
 				}
 			}
 		}
@@ -482,6 +482,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 	{
 		(*it)->draw(m_DD2D);
 	}
+	//Draw debug text
 	if (SimulationParameters::showDebug){
 		stringstream sstm;
 		float yPos = 10.0f;
@@ -691,6 +692,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		string s = "[F1] - Toggle debug menu";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(s.c_str()), Vector2(10, 10), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 	}
+	//End drawing
 	m_DD2D->m_Sprites->End();
 	_pd3dImmediateContext->OMSetDepthStencilState(m_States->DepthDefault(), 0);
 
@@ -698,13 +700,13 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 
 bool Game::ReadKeyboard()
 {
-	//copy over old keyboard state
+	//Copy over old keyboard state
 	memcpy(m_prevKeyboardState, m_keyboardState, sizeof(m_keyboardState));
 
-	//clear out previous state
+	//Clear out previous state
 	ZeroMemory(&m_keyboardState, sizeof(m_keyboardState));
 
-	// Read the keyboard device.
+	//Read the keyboard device.
 	HRESULT hr = m_pKeyboard->GetDeviceState(sizeof(m_keyboardState), (LPVOID)&m_keyboardState);
 	if (FAILED(hr))
 	{
@@ -718,18 +720,16 @@ bool Game::ReadKeyboard()
 			return false;
 		}
 	}
-
 	return true;
-
 }
 
 bool Game::ReadMouse()
 {
-	//clear out previous state
+	//Clear out previous state
 	CopyMemory(&m_prev_mouse_state, &m_mouse_state, sizeof(m_mouse_state));
 	ZeroMemory(&m_mouse_state, sizeof(m_mouse_state));
 
-	// Read the Mouse device.
+	//Read the Mouse device.
 	HRESULT hr = m_pMouse->GetDeviceState(sizeof(m_mouse_state), (LPVOID)&m_mouse_state);
 	if (FAILED(hr))
 	{
@@ -743,6 +743,7 @@ bool Game::ReadMouse()
 			return false;
 		}
 	}
+	//Set the cursor to the middle of the screen
 	if (SimulationParameters::cursorObstacle)
 	{
 		RECT rc;

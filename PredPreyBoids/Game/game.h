@@ -1,10 +1,8 @@
 #ifndef _GAME_H_
 #define _GAME_H_
-//Basic Game Manager Class
+
 #include <windows.h>
 #include "Effects.h"
-//#include "DXUT.h"
-//#include "SDKmisc.h"
 #include <list>
 #include "MyEffectsFactory.h"
 #include "CommonStates.h"
@@ -24,26 +22,24 @@ class boidManager;
 struct GameData;
 struct DrawData;
 struct DrawData2D;
-class UserInterfaceManager;
 
 class Game
 {
 public:
-
 	Game(ID3D11Device* pd3dDevice, HINSTANCE hInstance);
 	~Game();
-
-	bool update(); //tick the game state
-
+	//Tick the game state
+	bool update(); 
+	//Render everything
 	void render(ID3D11DeviceContext* pd3dImmediateContext); //render the current game state
 
 protected:
+	//Read in keyboard state
 	bool ReadKeyboard();
+	//Read in mouse state
 	bool ReadMouse();
-
-	DWORD m_playTime; //amount of time since the game started
-
-	Camera* m_cam; //principle camera
+	//Amount of time since the game started
+	DWORD m_playTime; 
 	Camera* m_mainCam; // TPS camera
 	PredCamera* m_predCamera; // TPS camera
 
