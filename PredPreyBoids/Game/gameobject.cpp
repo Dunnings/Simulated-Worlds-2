@@ -37,5 +37,7 @@ void GameObject::Tick(GameData* _GD)
 	while (m_yaw < -XM_2PI){
 		m_yaw += XM_2PI;
 	}
+	//To make the compiler happy
+	_GD;
 
 }

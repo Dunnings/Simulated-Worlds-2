@@ -13,6 +13,7 @@ static wchar_t* charToWChar(const char* _text)
 		wa = NULL;
 	}
 	wa = new wchar_t[size];
+	//Depreciated
 	mbstowcs(wa, _text, size);
 	return wa;
 }

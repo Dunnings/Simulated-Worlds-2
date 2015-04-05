@@ -28,4 +28,6 @@ void Camera::Tick(GameData* _GD)
 void Camera::Draw(DrawData* _DD)
 {
 	//Don't need to draw the camera
+	//To make the compiler happy
+	_DD;
 }

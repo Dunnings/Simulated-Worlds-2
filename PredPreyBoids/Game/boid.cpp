@@ -5,9 +5,10 @@
 #include <math.h>
 
 
-Boid::Boid()
+Boid::Boid(Waypoint* _finish, Waypoint* _outpost)
 {
-
+	finish = _finish;
+	outpost = _outpost;
 }
 
 void Boid::initialize()
@@ -23,7 +24,7 @@ void Boid::initialize()
 	//Set the tex-coords somewhere safe
 	for (int i = 0; i<numVerts; i++)
 	{
-		indices[i] = i;
+		indices[i] = (WORD)i;
 		m_vertices[i].texCoord = Vector2::One;
 	}
 
@@ -152,11 +153,11 @@ void Boid::initialize()
 	}
 
 	//Calculate the normals for the basic lighting in the base shader
-	for (int i = 0; i<m_numPrims; i++)
+	for (unsigned int i = 0; i<m_numPrims; i++)
 	{
-		WORD V1 = 3 * i;
-		WORD V2 = 3 * i + 1;
-		WORD V3 = 3 * i + 2;
+		WORD V1 = (WORD)(3 * i);
+		WORD V2 = (WORD)(3 * i + 1);
+		WORD V3 = (WORD)(3 * i + 2);
 
 		//Build normals
 		Vector3 norm;

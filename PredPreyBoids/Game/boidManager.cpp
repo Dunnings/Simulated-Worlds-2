@@ -136,40 +136,101 @@ void boidManager::deleteAllWaypoints(){
 
 Boid* boidManager::spawnBoid(int type)
 {
-	//Dynamically create a new BOID
-	Boid* newBoid = new Boid();
-	//Set the max speed to the pre-determined value
-	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
+	Vector3 startPos = Vector3(0.0f, 0.0f, 0.0f);
+	Waypoint* outpost = nullptr;
+	Waypoint* finish = nullptr;
 
 	//If there is a start position set, spawn there
 	bool startSet = false;
 	vector<Waypoint*> startWaypoints;
-
-	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
-		if ((*it)->getMyType() == waypointType::start){
-			if ((*it)->getTypeToAffect() == type){
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++)
+	{
+		if ((*it)->getMyType() == waypointType::start)
+		{
+			if ((*it)->getTypeToAffect() == type)
+			{
 				startWaypoints.push_back((*it));
 			}
 		}
 	}
-	int random = 0;
-	if (startWaypoints.size() > 1){
-		random = rand() % (startWaypoints.size() + 1);
+	int startRandom = 0;
+	if (startWaypoints.size() > 1)
+	{
+		startRandom = rand() % (startWaypoints.size());
 	}
 	int i = 0;
-	for (vector<Waypoint*>::iterator it = startWaypoints.begin(); it != startWaypoints.end(); it++){
-		if (i == random){
+	for (vector<Waypoint*>::iterator it = startWaypoints.begin(); it != startWaypoints.end(); it++)
+	{
+		if (i == startRandom)
+		{
 			float r1 = ((*it)->GetPos().x - (*it)->getAreaOfInfluence()) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (((*it)->GetPos().x + (*it)->getAreaOfInfluence()) - ((*it)->GetPos().x - (*it)->getAreaOfInfluence()))));
 			float r2 = ((*it)->GetPos().z - (*it)->getAreaOfInfluence()) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (((*it)->GetPos().z + (*it)->getAreaOfInfluence()) - ((*it)->GetPos().z - (*it)->getAreaOfInfluence()))));
-			newBoid->SetPos(Vector3(r1, 0.0f, r2));
-			startSet = true;
+			startPos = Vector3(r1, 0.0f, r2);
 			break;
 		}
 		i++;
 	}
-	
-	
-	if(!startSet){
+
+	vector<Waypoint*> outpostWaypoints;
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++)
+	{
+		if ((*it)->getMyType() == waypointType::outpost)
+		{
+			if ((*it)->getTypeToAffect() == type)
+			{
+				outpostWaypoints.push_back((*it));
+			}
+		}
+	}
+	int outpostRandom = 0;
+	if (outpostWaypoints.size() > 1)
+	{
+		outpostRandom = rand() % (outpostWaypoints.size());
+	}
+	int i2 = 0;
+	for (vector<Waypoint*>::iterator it = outpostWaypoints.begin(); it != outpostWaypoints.end(); it++)
+	{
+		if (i2 == outpostRandom)
+		{
+			outpost = (*it);
+			break;
+		}
+		i2++;
+	}
+
+	vector<Waypoint*> finishWaypoints;
+	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++)
+	{
+		if ((*it)->getMyType() == waypointType::finish)
+		{
+			if ((*it)->getTypeToAffect() == type)
+			{
+				finishWaypoints.push_back((*it));
+			}
+		}
+	}
+	int finishRandom = 0;
+	if (finishWaypoints.size() > 1)
+	{
+		finishRandom = rand() % (finishWaypoints.size());
+	}
+	int i3 = 0;
+	for (vector<Waypoint*>::iterator it = finishWaypoints.begin(); it != finishWaypoints.end(); it++)
+	{
+		if (i3 == finishRandom)
+		{
+			finish = (*it);
+			break;
+		}
+		i3++;
+	}
+
+	//Dynamically create a new BOID
+	Boid* newBoid = new Boid(finish, outpost);
+	//Set the max speed to the pre-determined value
+	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
+
+	if(startPos == Vector3(0.0f, 0.0f, 0.0f)){
 		//Create four random floats between -1.0 and 1.0 
 		float r1 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
@@ -179,6 +240,10 @@ Boid* boidManager::spawnBoid(int type)
 		newBoid->SetPos(Vector3(r1 * SimulationParameters::mapSize * 0.5f, 0.0f, r2* SimulationParameters::mapSize * 0.5f));
 		//Set direction randomly
 		newBoid->SetDirection(Vector3(r3, 0.0f, r4));
+	}
+	else
+	{
+		newBoid->SetPos(startPos);
 	}
 	//Set speed to half max speed
 	newBoid->SetSpeed(((SimulationParameters::boidMaxSpeed*type) / 2));
@@ -294,7 +359,6 @@ void boidManager::Tick(GameData* GD)
 {
 	if (toSpawn.size() > 0){
 		if (GetTickCount64() - lastSpawnTime > SimulationParameters::spawnDelay){
-			Boid* currentBoid = toSpawn.front();
 			myBoids.push_back(toSpawn.front());
 			toSpawn.erase(toSpawn.begin());
 			lastSpawnTime = GetTickCount64();
@@ -351,10 +415,10 @@ void boidManager::Tick(GameData* GD)
 		}
 
 		//Loop through each BOID in myBoids
-		for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
+		for (vector<Boid*>::iterator firstLoop = myBoids.begin(); firstLoop != myBoids.end();)
 		{
 			//For ease of visibility, create a BOID pointer to hold the current BOID
-			Boid* currentBoid = (*it);
+			Boid* currentBoid = (*firstLoop);
 			//Vector that holds the average direction of all BOIDs near the current BOID
 			Vector3 avDir;
 			//Vector that holds the average position of all BOIDs near the current BOID
@@ -460,16 +524,23 @@ void boidManager::Tick(GameData* GD)
 						}
 						else
 						{
-							for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
-								if ((*it)->getMyType() == waypointType::outpost){
-									if ((*it)->getTypeToAffect() == currentBoid->getType()){
-										if ((newBoid->GetPos() - (*it)->GetPos()).Length() < (*it)->getAreaOfInfluence()){
-											//Add the vector from the current BOID to the new BOID multiplied by 1/d*d to targetHeading where d is the distance between the BOIDs
-											targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
-											preyCount++;
-										}
-									}
+							//Check if the current BOID has an outpost assigned to it, if it has only hunt the new BOID if it is within the outpost bounds
+							bool isHuntable = false;
+							if (currentBoid->GetOutpost() != nullptr){
+								if ((newBoid->GetPos() - currentBoid->GetOutpost()->GetPos()).Length() < currentBoid->GetOutpost()->getAreaOfInfluence())
+								{
+									isHuntable = true;
 								}
+							}
+							else
+							{
+								isHuntable = true;
+							}
+							if (isHuntable)
+							{
+								//Add the vector from the current BOID to the new BOID multiplied by 1/d*d to targetHeading where d is the distance between the BOIDs
+								targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
+								preyCount++;
 							}
 						}
 						//Set the current BOID's speed to it's max speed
@@ -483,7 +554,7 @@ void boidManager::Tick(GameData* GD)
 				//Set the BOID's speed to it's max speed
 				currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 				//Average the targetHeading vector
-				targetHeading /= preyCount;
+				targetHeading /= (float)preyCount;
 				//Normalize the vector
 				targetHeading.Normalize();
 				//Set the current BOID's direction to targetHeading
@@ -522,36 +593,29 @@ void boidManager::Tick(GameData* GD)
 				
 				bool nothingToDo = true;
 				//If there is a finish point for this BOID then add it to the modifier
-				for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
-					if ((*it)->getMyType() == waypointType::finish){
-						if ((*it)->getTypeToAffect() == currentBoid->getType()){
-							nothingToDo = false;
-							if ((*it)->returnToward(currentBoid).Length() < (*it)->getAreaOfInfluence()){
-								if (SimulationParameters::respawnOnFinish){
-									spawnBoid(currentBoid->getType());
-									currentBoid->Damage(100.0f);
-								}
-							}
-							else{
-								modifier += 0.5f * (*it)->returnNormalizedToward(currentBoid);
-							}
+				if (currentBoid->GetFinish() != nullptr){
+					nothingToDo = false;
+					if (currentBoid->GetFinish()->returnToward(currentBoid).Length() < currentBoid->GetFinish()->getAreaOfInfluence())
+					{
+						if (SimulationParameters::respawnOnFinish){
+							spawnBoid(currentBoid->getType());
 						}
+						currentBoid->Damage(100.0f);
+					}
+					else{
+						modifier += 0.5f * currentBoid->GetFinish()->returnNormalizedToward(currentBoid);
 					}
 				}
 				//If there is no finish, check if there is an outpost the current BOID should go to
 				if (nothingToDo){
-					for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
-						if ((*it)->getMyType() == waypointType::outpost){
-							if ((*it)->getTypeToAffect() == currentBoid->getType()){
-								if ((*it)->returnToward(currentBoid).Length() > (*it)->getAreaOfInfluence()){
-									//Set the current BOID's direction to the center modifier
-									currentBoid->SetDirection((*it)->returnNormalizedToward(currentBoid));
-									modifier = Vector3::Zero; 
-								}
-								nothingToDo = false;
-							}
-						}
+				if (currentBoid->GetOutpost())
+					if (currentBoid->GetOutpost()->returnToward(currentBoid).Length() > currentBoid->GetOutpost()->getAreaOfInfluence())
+					{
+						//Set the current BOID's direction to the center modifier
+						currentBoid->SetDirection(currentBoid->GetOutpost()->returnNormalizedToward(currentBoid));
+						modifier = Vector3::Zero; 
 					}
+					nothingToDo = false;
 				}
 				//If there is still nothing to do, make sure I'm near the center of the screen
 				if (nothingToDo){
@@ -572,14 +636,14 @@ void boidManager::Tick(GameData* GD)
 				//Tick the current BOID
 				currentBoid->Tick(GD);
 				//Increment count
-				++it;
+				++firstLoop;
 				//Increment boidCount count for the current BOID's type
 				boidCount[currentBoid->getType()]++;
 			}
 			else
 			{
 				//If the BOID is dead erase it from myBoids
-				it = myBoids.erase(it);
+				firstLoop = myBoids.erase(firstLoop);
 			}
 		}
 		//Update simulation parameters with boidCount

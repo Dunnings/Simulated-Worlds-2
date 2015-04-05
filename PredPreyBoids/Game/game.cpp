@@ -35,7 +35,8 @@ bool SimulationParameters::showDebug;
 void Game::loadParameters()
 {
 	SimulationParameters para;
-
+	//To make the compiler happy
+	para;
 	//Default values
 	para.groupStrength = 0.0f;
 	para.groupDistance = 200.0f;
@@ -150,7 +151,7 @@ void Game::loadParameters()
 Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_myEF(nullptr)
 {
 	//Initialize random seed
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 
 	//Initialize keyboard and direct input
 	m_pKeyboard = nullptr;
@@ -318,7 +319,7 @@ bool Game::update()
 		}
 	}
 
-	//Zoom out
+	//Zoom in
 	if ((m_keyboardState[DIK_UPARROW] & 0x80))
 	{
 		if (m_DD->cam == m_mainCam){
@@ -328,6 +329,7 @@ bool Game::update()
 		}
 	}
 
+	//Zoom out
 	if ((m_keyboardState[DIK_DOWNARROW] & 0x80))
 	{
 		if (m_DD->cam == m_mainCam){

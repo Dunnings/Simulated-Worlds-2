@@ -40,21 +40,25 @@ protected:
 	bool ReadMouse();
 	//Amount of time since the game started
 	DWORD m_playTime; 
-	Camera* m_mainCam; // TPS camera
-	PredCamera* m_predCamera; // TPS camera
+	//Main camera
+	Camera* m_mainCam; 
+	//Predator camera
+	PredCamera* m_predCamera;
 
-	Light* m_Light; //base light
+	//Base light
+	Light* m_Light;
 
 	boidManager* boidMan;
+	//Data structure storing all GameObjects of this Game
+	list<GameObject *> m_GameObjects;
+	//Data structure storing all 2D GameObjects
+	list<GameObject2D *> m_GameObject2Ds;
 
-	list<GameObject *> m_GameObjects; //data structure storing all GameOBjects of this Game
-	list<GameObject2D *> m_GameObject2Ds;//ditto 2D objects
-
-	//required for the CMO model rendering system
+	//Required for the CMO model rendering system
 	MyEffectFactory* m_myEF; 
 	CommonStates* m_States;
 
-	//input stuff
+	//Input stuff
 	IDirectInput8*			m_pDirectInput;
 	IDirectInputDevice8*	m_pKeyboard;
 	unsigned char			m_keyboardState[256];
@@ -63,16 +67,15 @@ protected:
 	DIMOUSESTATE			m_mouse_state;
 	DIMOUSESTATE			m_prev_mouse_state;
 
-	//my GameData
+	//My GameData
 	GameData* m_GD;
 	DrawData* m_DD;
 	DrawData2D* m_DD2D;
 
-	//parameters
+	//Parameters
 	bool loadedFile = false;
 	void loadParameters();
 	string fileName = "SimulationParameters.dat";
-
 	int spawnPerPress = 1;
 };
 

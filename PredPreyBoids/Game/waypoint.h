@@ -9,7 +9,7 @@ enum waypointType{
 	finish
 };
 
-class Waypoint : public Boid
+class Waypoint : public VBGO
 {
 public:
 	Waypoint();
@@ -25,11 +25,14 @@ public:
 	void Tick(GameData* GD);
 	void Draw(DrawData* DD);
 	virtual void initialize();
-	vector<myVertex> lineVertices;
 private:
 	int typeToAffect;
 	waypointType myType;
 	float areaOfInfluence = 200.0f;
+	//Every vertex of this waypoint
+	myVertex* m_vertices;
+	//Line vertices for drawing debug info
+	vector<myVertex> lineVertices;
 };
 
 #endif

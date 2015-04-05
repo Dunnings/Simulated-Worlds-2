@@ -8,7 +8,7 @@ using namespace DirectX;
 using namespace SimpleMath;
 using namespace std;
 
-class GameData;
+struct GameData;
 struct DrawData2D;
 
 class GameObject2D

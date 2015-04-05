@@ -20,10 +20,16 @@
 </waypoint>
 
 <waypoint>
+<type>finish</type>
+<typeToAffect>1</typeToAffect>
+<x>1000.0</x>
+<z>-1000.0</z>
+</waypoint>
+
+<waypoint>
 <type>outpost</type>
 <typeToAffect>2</typeToAffect>
 <size>500.0</size>
 <x>10.0</x>
 <z>200.0</z>
-</waypoint>
 </waypoint>

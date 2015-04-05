@@ -10,11 +10,12 @@
 #include <math.h>
 
 using std::vector;
+class Waypoint;
 
 class Boid : public VBGO
 {
 public:
-	Boid();
+	Boid(Waypoint* _finish, Waypoint* _outpost);
 	~Boid();
 	virtual void Tick(GameData* GD);
 	virtual void Draw(DrawData* DD);
@@ -35,8 +36,17 @@ public:
 	//Set the type of BOID
 	void SetType(int type) { m_type = type; };
 	//Set how full the BOID is
-	void SetWeight(int w){ m_weight = w; };
-	
+	void SetWeight(int w) { m_weight = w; };
+	//Set finish waypoint
+	void setFinish(Waypoint* _finish) { finish = _finish; };
+	//Set outpost waypoint
+	void setOutpost(Waypoint* _outpost) { outpost = _outpost; };
+
+
+	//Get finish waypoint
+	Waypoint* GetFinish() { return finish; };
+	//Get outpost waypoint
+	Waypoint* GetOutpost() { return outpost; };
 	//Get the BOID's current speed
 	float getSpeed() { return m_speed; };
 	//Get the BOID's maximum speed
@@ -56,7 +66,7 @@ public:
 	//Get the BOID's current weight
 	int getWeight() { return m_weight; };
 	//Get the BOID's current health
-	int getHealth() { return m_health; };
+	float getHealth() { return m_health; };
 	//Get the BOID's smooth yaw
 	float getSmoothYaw() { return smooth_yaw; };
 	//Get the BOID's scale
@@ -75,6 +85,10 @@ public:
 protected:
 	//The BOID's hierarchial level
 	int m_type;
+	//The BOID's target finish
+	Waypoint* finish;
+	//The BOID's target outpost
+	Waypoint* outpost;
 	//Current weight
 	int m_weight = 0;
 	//Current direction
@@ -104,7 +118,7 @@ protected:
 	//Small function to modify the VB to produce a coloured cone
 	virtual void ConeTransform(Color c)
 	{
-		for (int i = 0; i< m_numPrims * 3; i++)
+		for (unsigned int i = 0; i< m_numPrims * 3; i++)
 		{
 			Vector3 vertPos = m_vertices[i].Pos;
 			Vector3 spherePos = m_vertices[i].Pos;
@@ -115,7 +129,7 @@ protected:
 			m_vertices[i].Color = c;
 			m_vertices[i].Pos = newPos;
 		}
-		for (int i = 0; i<m_numPrims * 3; i++)
+		for (unsigned int i = 0; i<m_numPrims * 3; i++)
 		{
 			Vector3 vertPos = m_vertices[i].Pos;
 
@@ -129,7 +143,7 @@ protected:
 	//Small function to modify the VB to produce a coloured sphere
 	virtual void SphereTransform(Color c)
 	{
-		for (int i = 0; i< m_numPrims * 3; i++)
+		for (unsigned int i = 0; i< m_numPrims * 3; i++)
 		{
 			Vector3 vertPos = m_vertices[i].Pos;
 			Vector3 spherePos = m_vertices[i].Pos;

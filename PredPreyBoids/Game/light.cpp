@@ -14,5 +14,6 @@ Light::~Light()
 }
 
 void Light::Tick(GameData* GD){
-
+	//To make the compiler happy
+	GD;
 }

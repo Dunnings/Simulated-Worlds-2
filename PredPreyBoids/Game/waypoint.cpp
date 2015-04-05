@@ -13,20 +13,27 @@ void Waypoint::Tick(GameData* GD)
 { 
 	VBGO::Tick(GD);
 }
+
 void Waypoint::Draw(DrawData* DD)
 { 
+	//If displayign debgu info
 	if (SimulationParameters::showDebug)
 	{
+		//Draw the waypoint
 		VBGO::Draw(DD);
 
-		int sides = 100;
+		//Define how many sides this "circle" has
+		int sides = 50;
+		//The angle between each vertex is defined here
 		float Angle = (360.0f / sides) * (XM_PI/180);
-
-		Vector3 vec(areaOfInfluence * cos(Angle), 0.0f, areaOfInfluence * sin(Angle));
-		Vector3 rot;
-		int x = 0;
-
-		Color c;
+		//Initialize first vertex position 
+		Vector3 first(areaOfInfluence * cos(Angle), 0.0f, areaOfInfluence * sin(Angle));
+		//Initialize second vertex position
+		Vector3 second;
+		//Integer to keep count of vertices
+		int vertexCount = 0;
+		//Define a color to use for every vertex based on the type of waypoint
+		Color c = Color(0.0f, 0.0f, 0.0f);
 		if (myType == waypointType::start){
 			c = Color(0.0f, 1.0f, 0.0f);
 		}
@@ -37,32 +44,41 @@ void Waypoint::Draw(DrawData* DD)
 			c = Color(1.0f, 0.0f, 0.0f);
 		}
 
+		//Loop through for each side
 		for (unsigned short i = 0; i <= sides; ++i)
 		{
-			rot = Vector3(areaOfInfluence * cos(Angle * (i+1)), 0.0f, areaOfInfluence * sin(Angle * (i+1)));
+			//Set the second vertex to be the next point around the circle
+			second = Vector3(areaOfInfluence * cos(Angle * (i+1)), 0.0f, areaOfInfluence * sin(Angle * (i+1)));
+			//Define two vertices
 			myVertex newVertex1;
 			myVertex newVertex2;
-			newVertex1.Pos = vec;
+			//Assign the first one the first position and the preset colour
+			newVertex1.Pos = first;
 			newVertex1.Color = c;
-			++x;
-			newVertex2.Pos = rot;
+			//Increment vertex count
+			++vertexCount;
+			//Assign the second one the second position and the preset colour
+			newVertex2.Pos = second;
 			newVertex2.Color = c;
-			++x;
-			vec = rot;
+			//Increment vertex count
+			++vertexCount;
+			//Now to move onto the next two vertices set first to second
+			first = second;
+			//Add the two new vertices to lineVertices vector
 			lineVertices.push_back(newVertex1);
 			lineVertices.push_back(newVertex2);
 		}
 
-		myVertex* vertexArray = new myVertex[x];
+		//Code to convert from vertex to array, which is needed to be passed in as a void pointer to Build vertex buffer
+		myVertex* vertexArray = new myVertex[vertexCount];
 		int i = 0;
-
 		for (vector<myVertex>::iterator it = lineVertices.begin(); it != lineVertices.end(); ++it){
 			vertexArray[i] = (*it);
 			++i;
 		}
 
 		//Build a line vertex buffer using these two points
-		BuildLineVB(GameData::p3d, x, vertexArray);
+		BuildLineVB(GameData::p3d, vertexCount, vertexArray);
 
 		//Set raster state
 		ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
@@ -95,7 +111,7 @@ void Waypoint::Draw(DrawData* DD)
 		DD->pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		//Then finally draw
-		DD->pd3dImmediateContext->DrawIndexed(x, 0, 0);//number here will need to change depending on the primative topology!
+		DD->pd3dImmediateContext->DrawIndexed(vertexCount, 0, 0);//number here will need to change depending on the primative topology!
 
 		//Cleanup line vertex buffer
 		if (m_LineVertexBuffer)
@@ -110,7 +126,7 @@ void Waypoint::Draw(DrawData* DD)
 
 void Waypoint::initialize()
 {
-	//Size of the boid
+	//Size of the waypoint
 	int m_size = 11;
 	//Calculate number of vertices and primatives
 	int numVerts = 6 * 6 * (m_size - 1) * (m_size - 1);
@@ -121,25 +137,39 @@ void Waypoint::initialize()
 	//Set the tex-coords somewhere safe
 	for (int i = 0; i<numVerts; i++)
 	{
-		indices[i] = i;
+		indices[i] = (WORD)i;
 		m_vertices[i].texCoord = Vector2::One;
 	}
 
-	Color c = Color(1.0f, 1.0f, 1.0f);
+	Color cSides = Color(1.0f, 1.0f, 1.0f);
 	if (typeToAffect == 1){
-		c = Color(0.0f, 0.0f, 1.0f);
+		cSides = Color(0.0f, 0.0f, 1.0f);
 	}
 	else if (myType == 2){
-		c = Color(0.0f, 1.0f, 0.0f);
+		cSides = Color(0.0f, 1.0f, 0.0f);
 	}
 	else if (myType == 3){
-		c = Color(1.0f, 0.0f, 0.0f);
+		cSides = Color(1.0f, 0.0f, 0.0f);
 	}
 	else if (myType == 4){
-		c = Color(0.0f, 1.0f, 1.0f);
+		cSides = Color(0.0f, 1.0f, 1.0f);
 	}
 	else if (myType == 5){
-		c = Color(1.0f, 0.0f, 1.0f);
+		cSides = Color(1.0f, 0.0f, 1.0f);
+	}
+
+	Color cTop = Color(0.0f, 0.0f, 0.0f);
+	if (myType == waypointType::start)
+	{
+		cTop = Color(0.0f, 1.0f, 0.0f);
+	}
+	else if (myType == waypointType::outpost)
+	{
+		cTop = Color(0.0f, 0.0f, 1.0f);
+	}
+	else if (myType == waypointType::finish)
+	{
+		cTop = Color(1.0f, 0.0f, 0.0f);
 	}
 
 	//In each loop create the two traingles for the matching sub-square on each of the six faces
@@ -149,103 +179,103 @@ void Waypoint::initialize()
 		for (int j = -(m_size - 1) / 2; j<(m_size - 1) / 2; j++)
 		{
 			//Top
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)i, 0.5f * (float)(m_size - 1), (float)j);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)i, 0.5f * (float)(m_size - 1), (float)(j + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.5f * (float)(m_size - 1), (float)j);
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.5f * (float)(m_size - 1), (float)j);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)i, 0.5f * (float)(m_size - 1), (float)(j + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cTop;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.5f * (float)(m_size - 1), (float)(j + 1));
 
 			//Back
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)i, (float)j, 0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), (float)j, 0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)i, (float)(j + 1), 0.5f * (float)(m_size - 1));
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), (float)j, 0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), (float)(j + 1), 0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)i, (float)(j + 1), 0.5f * (float)(m_size - 1));
 
 			//Right
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)i, (float)j);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)(i + 1), (float)j);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)i, (float)(j + 1));
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)(i + 1), (float)j);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)(i + 1), (float)(j + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(0.5f * (float)(m_size - 1), (float)i, (float)(j + 1));
 
 			//Bottom
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, -0.5f * (float)(m_size - 1), (float)i);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), -0.5f * (float)(m_size - 1), (float)i);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, -0.5f * (float)(m_size - 1), (float)(i + 1));
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, -0.5f * (float)(m_size - 1), (float)(i + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), -0.5f * (float)(m_size - 1), (float)i);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), -0.5f * (float)(m_size - 1), (float)(i + 1));
 
 			//Front
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, (float)i, -0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, (float)(i + 1), -0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), (float)i, -0.5f * (float)(m_size - 1));
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)j, (float)(i + 1), -0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), (float)(i + 1), -0.5f * (float)(m_size - 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3((float)(j + 1), (float)i, -0.5f * (float)(m_size - 1));
 
 			//Left
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)j, (float)i);
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)j, (float)(i + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)(j + 1), (float)i);
 
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)j, (float)(i + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)(j + 1), (float)(i + 1));
-			m_vertices[vert].Color = c;
+			m_vertices[vert].Color = cSides;
 			m_vertices[vert++].Pos = Vector3(-0.5f * (float)(m_size - 1), (float)(j + 1), (float)i);
 		}
 	}
 
 	//Calculate the normals for the basic lighting in the base shader
-	for (int i = 0; i<m_numPrims; i++)
+	for (unsigned int i = 0; i<m_numPrims; i++)
 	{
-		WORD V1 = 3 * i;
-		WORD V2 = 3 * i + 1;
-		WORD V3 = 3 * i + 2;
+		WORD V1 = (WORD)(3 * i);
+		WORD V2 = (WORD)(3 * i + 1);
+		WORD V3 = (WORD)(3 * i + 2);
 
 		//Build normals
 		Vector3 norm;
@@ -259,7 +289,9 @@ void Waypoint::initialize()
 		m_vertices[V3].Norm = norm;
 	}
 
+	//Build index buffer
 	BuildIB(GameData::p3d, indices);
+	//Build vertex buffer
 	BuildVB(GameData::p3d, numVerts, m_vertices);
 
 	delete[] m_vertices;
