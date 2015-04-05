@@ -126,7 +126,7 @@ void Boid::initialize()
 		}
 	}
 	
-	//Change the BOIDs to be different colour shapes using a transform
+	//Change the boids to be different colour shapes using a transform
 	if (m_type == 0)
 	{
 		SphereTransform(Color(1.0f, 1.0f, 1.0f));
@@ -209,13 +209,13 @@ void Boid::Tick(GameData* GD)
 	//If the simulation is running
 	if (GD->GS == GS_PLAY_PLAY)
 	{
-		//If this BOID is not an obstacle
+		//If this boid is not an obstacle
 		if (m_type != 0)
 		{
-			//If the BOID has eaten
+			//If the boid has eaten
 			if (m_weight > 1)
 			{
-				//If it has been a predetermined amount of time since the BOID ate/starved
+				//If it has been a predetermined amount of time since the boid ate/starved
 				if (GetTickCount64() - lastUpdateTickCount > SimulationParameters::starvationTime)
 				{
 					Starve();
@@ -231,11 +231,11 @@ void Boid::Tick(GameData* GD)
 			{
 				w_speed *= 1.0f / m_weight;
 			}
-			//Move BOID in direction by new speed
+			//Move boid in direction by new speed
 			m_pos += m_direction * w_speed * GD->dt;
-			//Point BOID in direction of travel
+			//Point boid in direction of travel
 			m_yaw = atan2(m_direction.x, m_direction.z);
-			//Slow down BOID to half max speed
+			//Slow down boid to half max speed
 			if (m_speed > max_speed / 2)
 			{
 				m_speed -= (m_speed - max_speed) * GD->dt;
@@ -252,35 +252,84 @@ void Boid::Tick(GameData* GD)
 
 void Boid::Draw(DrawData* DD)
 {
-	//Draw the BOID
+	//Draw the boid
 	VBGO::Draw(DD);
 
 	//If debug mode is on
-	if (SimulationParameters::showDebug)
+	if (SimulationParameters::showDebugForces || SimulationParameters::showDebugSight)
 	{
-		//Create 2 vertices
-		//One at the object's position
-		myVertex newVertex1;
-		newVertex1.Pos = Vector3::Zero;
-		newVertex1.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
-		//One at the direction of travel
-		myVertex newVertex2;
-		newVertex2.Pos = m_direction * m_speed;
-		newVertex2.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+		//Integer to keep count of vertices
+		int vertexCount = 0;
+		if (SimulationParameters::showDebugForces){
+			//Create 2 vertices
+			//One at the object's position
+			myVertex newVertex1;
+			newVertex1.Pos = Vector3::Zero;
+			newVertex1.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+			//One at the direction of travel
+			myVertex newVertex2;
+			newVertex2.Pos = m_direction * m_speed;
+			newVertex2.Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-		myVertex* lineVertices = new myVertex[2];
+			lineVertices.push_back(newVertex1);
+			vertexCount++;
+			lineVertices.push_back(newVertex2);
+			vertexCount++;
+		}
+		if (SimulationParameters::showDebugSight){
+			//Define how many sides this "circle" has
+			int sides = 50;
+			//The angle between each vertex is defined here
+			float Angle = (360.0f / sides) * (XM_PI / 180);
+			//Initialize first vertex position 
+			Vector3 first(m_sight * cos(Angle), 0.0f, m_sight * sin(Angle));
+			//Initialize second vertex position
+			Vector3 second;
+			//Define a color to use for every vertex based on the type of waypoint
+			Color c = Color(0.0f, 1.0f, 0.0f);
 
-		lineVertices[0] = (newVertex1);
-		lineVertices[1] = (newVertex2);
+			//Loop through for each side
+			for (unsigned short i = 0; i <= sides; ++i)
+			{
+				//Set the second vertex to be the next point around the circle
+				second = Vector3(m_sight * cos(Angle * (i + 1)), 0.0f, m_sight * sin(Angle * (i + 1)));
+				//Define two vertices
+				myVertex newVertex1;
+				myVertex newVertex2;
+				//Assign the first one the first position and the preset colour
+				newVertex1.Pos = first;
+				newVertex1.Color = c;
+				//Increment vertex count
+				++vertexCount;
+				//Assign the second one the second position and the preset colour
+				newVertex2.Pos = second;
+				newVertex2.Color = c;
+				//Increment vertex count
+				++vertexCount;
+				//Now to move onto the next two vertices set first to second
+				first = second;
+				//Add the two new vertices to lineVertices vector
+				lineVertices.push_back(newVertex1);
+				lineVertices.push_back(newVertex2);
+			}
+		}
+
+		//Code to convert from vertex to array, which is needed to be passed in as a void pointer to Build vertex buffer
+		myVertex* vertexArray = new myVertex[vertexCount];
+		int i = 0;
+		for (vector<myVertex>::iterator it = lineVertices.begin(); it != lineVertices.end(); ++it){
+			vertexArray[i] = (*it);
+			++i;
+		}
 
 		//Build a line vertex buffer using these two points
-		BuildLineVB(GameData::p3d, 2, lineVertices);
+		BuildLineVB(GameData::p3d, vertexCount, vertexArray);
 
 		//Set raster state
 		ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
 		DD->pd3dImmediateContext->RSSetState(useRasterS);
 
-		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the BOID
+		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the boid
 		Matrix tempScale = Matrix::CreateScale(Vector3(1.0f, 1.0f, 1.0f));
 		Matrix tempRot = Matrix::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
 		Matrix tempTrans = Matrix::CreateTranslation(m_pos);
@@ -307,7 +356,7 @@ void Boid::Draw(DrawData* DD)
 		DD->pd3dImmediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		//Then finally draw
-		DD->pd3dImmediateContext->DrawIndexed(2, 0, 0);//number here will need to change depending on the primative topology!
+		DD->pd3dImmediateContext->DrawIndexed(vertexCount, 0, 0);//number here will need to change depending on the primative topology!
 
 		//Cleanup line vertex buffer
 		if (m_LineVertexBuffer)
@@ -315,6 +364,7 @@ void Boid::Draw(DrawData* DD)
 			m_LineVertexBuffer->Release();
 			m_LineVertexBuffer = nullptr;
 		}
+		lineVertices.clear();
 	}
 }
 

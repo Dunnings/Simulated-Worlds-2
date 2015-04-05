@@ -11,12 +11,12 @@ public:
 	PredCamera(float _fieldOfView, float _aspectRatio, float _nearPlaneDistance, float _farPlaneDistance, Vector3 _up, Vector3 _dpos);
 	virtual ~PredCamera();
 	virtual void Tick(GameData* GD);
-	//Return the BOID that this camera is connected to
+	//Return the boid that this camera is connected to
 	Boid* GetTarget(){ return m_targetObject; };
-	//Set the BOID that this camera is connected to
+	//Set the boid that this camera is connected to
 	void changeTarget(Boid* _target);
 protected:
-	//Target BOID
+	//Target boid
 	Boid* m_targetObject;
 	//Offset vector
 	Vector3	m_dpos;

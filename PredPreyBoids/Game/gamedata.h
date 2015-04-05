@@ -23,18 +23,21 @@ struct GameData
 struct SimulationParameters
 {
 	static float groupStrength; //How strong is the grouping
-	static float groupDistance; //How far are BOIDs attracted to group
+	static float groupDistance; //How far are boids attracted to group
 	static float groupHeading; //How strong is the average heading of groups
-	static float boidMaxSpeed; //Max speed of type 1 BOID
+	static float boidMaxSpeed; //Max speed of type 1 boid
 	static float obstacleSize; //Sphere of influence for obstacles
 	static float mapSize; //Map bounds
-	static float spawnDelay; //How often do BOIDs spawn
-	static bool respawnOnFinish; //Once the BOID has reached it's finish should it respawn?
-	static bool respawnOnDeath; //If killed, should the BOID respawn?
+	static float spawnDelay; //How often do boids spawn
+	static bool respawnOnFinish; //Once the boid has reached it's finish should it respawn?
+	static bool respawnOnDeath; //If killed, should the boid respawn?
 	static bool cursorObstacle; //Is the cursor an obstacle
-	static bool showDebug; //Do I display debug menu and lines
-	static float starvationTime; //How long after a kill do BOIDs lose weight
-	static std::map<int, int> boidCount; //Count of eac htype of BOID
+	static bool showDebugMenu; //Do I display debug menu
+	static bool showDebugForces; //Do I display debug lines
+	static bool showDebugSight; //Do I display debug sight range
+	static bool showDebugWaypoints; //Do I display debug waypoints
+	static float starvationTime; //How long after a kill do boids lose weight
+	static std::map<int, int> boidCount; //Count of eac htype of boid
 };
 
 #endif

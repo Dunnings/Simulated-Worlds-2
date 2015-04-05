@@ -16,8 +16,8 @@ void Waypoint::Tick(GameData* GD)
 
 void Waypoint::Draw(DrawData* DD)
 { 
-	//If displayign debgu info
-	if (SimulationParameters::showDebug)
+	//If displaying debgug info
+	if (SimulationParameters::showDebugWaypoints)
 	{
 		//Draw the waypoint
 		VBGO::Draw(DD);
@@ -84,7 +84,7 @@ void Waypoint::Draw(DrawData* DD)
 		ID3D11RasterizerState* useRasterS = m_pRasterState ? m_pRasterState : s_pRasterState;
 		DD->pd3dImmediateContext->RSSetState(useRasterS);
 
-		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the BOID
+		//Create a new world matrix based on a one scale and with no rotation and with translation set to the position of the boid
 		Matrix tempScale = Matrix::CreateScale(Vector3(1.0f, 1.0f, 1.0f));
 		Matrix tempRot = Matrix::CreateFromYawPitchRoll(0.0f, 0.0f, 0.0f);
 		Matrix tempTrans = Matrix::CreateTranslation(m_pos);

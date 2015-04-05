@@ -106,36 +106,92 @@ void boidManager::loadMap(){
 				w->SetPos(pos);
 				addWaypoint(w);
 			}
+			else if (currentLine == "<obstacle>")
+			{
+				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
+				while (currentLine != "</waypoint>" && !mapFile.eof()){
+					//Move to next line
+					getline(mapFile, currentLine);
+					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos){
+						int start = currentLine.find("<x>") + 3;
+						int end = currentLine.find("</x>");
+						pos.x = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos){
+						int start = currentLine.find("<y>") + 3;
+						int end = currentLine.find("</y>");
+						pos.y = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos){
+						int start = currentLine.find("<z>") + 3;
+						int end = currentLine.find("</z>");
+						pos.z = stof(currentLine.substr(start, end - start));
+					}
+				}
+				Boid* b = spawnBoid(0);
+				b->SetPos(pos);
+			}
 		}
 	}
 }
 
 
 void boidManager::addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi){
+	//Initialize new waypoint
 	Waypoint* newW = new Waypoint;
+	//Set waypoint attributes to function arguments
 	newW->SetPos(_pos);
 	newW->setMyType(_type);
 	newW->setTypeToAffect(_affects);
 	newW->setAreaOfInfluence(_aoi);
-	newW->initialize();
-	m_waypoints.push_back(newW);
+	//Add waypoint
+	addWaypoint(newW);
 }
 
 void boidManager::addWaypoint(Waypoint* w){
+	//Initialize waypoint
 	w->initialize();
+	//Add waypoint to waypoint vector
 	m_waypoints.push_back(w);
 }
 
 void boidManager::deleteAllWaypoints(){
+	//Loop through all waypoints
 	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++){
+		//Delete waypoint
 		delete((*it));
+		//Set waypoint pointer to null
 		(*it) = nullptr;
 	}
+	//Enpty m_waypoints
 	m_waypoints.clear();
+}
+
+Boid* boidManager::respawnBoid(Boid* b, bool keepPos){
+	Boid* b2 = spawnBoid(b->getType());
+	if (keepPos){
+		b2->SetPos(b->GetPos());
+	}
+	deleteBoid(b);
+	return b2;
+}
+
+void boidManager::respawnAllBoids(bool keepPos){
+	//Loop through all boids in myBoids
+	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
+	{
+		//Spawn new boid
+		Boid* b2 = spawnBoid((*it)->getType());
+		if (keepPos){
+			b2->SetPos((*it)->GetPos());
+		}
+		(*it)->Damage(1000.0f);
+	}
 }
 
 Boid* boidManager::spawnBoid(int type)
 {
+	//Initilize waypoint variables
 	Vector3 startPos = Vector3(0.0f, 0.0f, 0.0f);
 	Waypoint* outpost = nullptr;
 	Waypoint* finish = nullptr;
@@ -225,7 +281,7 @@ Boid* boidManager::spawnBoid(int type)
 		i3++;
 	}
 
-	//Dynamically create a new BOID
+	//Dynamically create a new boid
 	Boid* newBoid = new Boid(finish, outpost);
 	//Set the max speed to the pre-determined value
 	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
@@ -236,7 +292,7 @@ Boid* boidManager::spawnBoid(int type)
 		float r2 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 		float r3 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
 		float r4 = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1.0f - -1.0f)));
-		//Set the BOID position to a random location within pre-determined map bounds
+		//Set the boid position to a random location within pre-determined map bounds
 		newBoid->SetPos(Vector3(r1 * SimulationParameters::mapSize * 0.5f, 0.0f, r2* SimulationParameters::mapSize * 0.5f));
 		//Set direction randomly
 		newBoid->SetDirection(Vector3(r3, 0.0f, r4));
@@ -247,36 +303,36 @@ Boid* boidManager::spawnBoid(int type)
 	}
 	//Set speed to half max speed
 	newBoid->SetSpeed(((SimulationParameters::boidMaxSpeed*type) / 2));
-	//Set the BOID type
+	//Set the boid type
 	newBoid->SetType(type);
-	//Initialise BOID vertex buffer
+	//Initialise boid vertex buffer
 	newBoid->initialize();
 	//Scale down prey
 	if (type == 1)
 	{
 		newBoid->SetScale(0.6f);
 	}
-	//Add BOID to manager's vector
+	//Add boid to manager's vector
 	toSpawn.push_back(newBoid);
-	//Return the created BOID
+	//Return the created boid
 	return newBoid;
 }
 
 void boidManager::deleteBoid(Boid* b){
-	//If the given BOID is the cursor BOID
+	//If the given boid is the cursor boid
 	if (cursor == b){
-		//Delete the cursor BOID
+		//Delete the cursor boid
 		delete b;
 		b = nullptr;
 	}
 	else{
-		//Otherwise loop through all BOIDs in myBoids
+		//Otherwise loop through all boids in myBoids
 		for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 		{
-			//If the current BOID is the given BOID
+			//If the current boid is the given boid
 			if ((*it) == b)
 			{
-				//Delete this BOID and stop searching
+				//Delete this boid and stop searching
 				delete b;
 				b = nullptr;
 				it = myBoids.erase(it);
@@ -292,13 +348,13 @@ void boidManager::deleteBoid(Boid* b){
 }
 
 void boidManager::deleteBoid(int type){
-	//Loop through all BOIDs in myBoids
+	//Loop through all boids in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
-		//If the current BOID is the same type as the given type
+		//If the current boid is the same type as the given type
 		if ((*it)->getType() == type)
 		{
-			//Delete this BOID and stop searching
+			//Delete this boid and stop searching
 			(*it) = nullptr;
 			delete((*it));
 			it = myBoids.erase(it);
@@ -313,17 +369,17 @@ void boidManager::deleteBoid(int type){
 
 void boidManager::deleteAll()
 {
-	//Loop through all BOIDs in myBoids
+	//Loop through all boids in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
-		//Kill the BOID
+		//Kill the boid
 		(*it)->Damage(1000.0f);
 		(*it) = nullptr;
 	}
-	//Loop through all BOIDs in toSpawn
+	//Loop through all boids in toSpawn
 	for (vector<Boid*>::iterator it = toSpawn.begin(); it != toSpawn.end(); it++)
 	{
-		//Kill the BOID
+		//Kill the boid
 		(*it)->Damage(1000.0f);
 		(*it) = nullptr;
 	}
@@ -337,21 +393,21 @@ Boid* boidManager::getHighestBOID()
 {
 	//Start with type 0
 	int type = 0;
-	//Initialize a BOID to return
+	//Initialize a boid to return
 	Boid* toReturn = nullptr;
-	//Loop through all BOIDs in myBoids
+	//Loop through all boids in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
-		//If this BOID's type is higher than type
+		//If this boid's type is higher than type
 		if ((*it)->getType() > type)
 		{
-			//Set the BOID to return to this one
+			//Set the boid to return to this one
 			toReturn = (*it);
-			//Set the type to this BOID's type
+			//Set the type to this boid's type
 			type = toReturn->getType();
 		}
 	}
-	//Return the highest BOID
+	//Return the highest boid
 	return toReturn;
 }
 
@@ -368,7 +424,7 @@ void boidManager::Tick(GameData* GD)
 	//If the simulation is running
 	if (GD->GS == GS_PLAY_PLAY)
 	{
-		//Initialise a map to hold the BOID counts
+		//Initialise a map to hold the boid counts
 		map<int, int> boidCount;
 		//If the user's cursor is an obstacle
 		if (SimulationParameters::cursorObstacle)
@@ -414,117 +470,117 @@ void boidManager::Tick(GameData* GD)
 			}
 		}
 
-		//Loop through each BOID in myBoids
+		//Loop through each boid in myBoids
 		for (vector<Boid*>::iterator firstLoop = myBoids.begin(); firstLoop != myBoids.end();)
 		{
-			//For ease of visibility, create a BOID pointer to hold the current BOID
+			//For ease of visibility, create a boid pointer to hold the current boid
 			Boid* currentBoid = (*firstLoop);
-			//Vector that holds the average direction of all BOIDs near the current BOID
+			//Vector that holds the average direction of all boids near the current boid
 			Vector3 avDir;
-			//Vector that holds the average position of all BOIDs near the current BOID
+			//Vector that holds the average position of all boids near the current boid
 			Vector3 avPos;
 			//Integer that holds how many prey the currentBoid is attracted to
 			int preyCount = 0;
-			//Integer that holds how many BOIDs are nearby for grouping
+			//Integer that holds how many boids are nearby for grouping
 			int count = 0;
-			//Boolean that states if the BOID is impeded from grouping
+			//Boolean that states if the boid is impeded from grouping
 			bool isImpeded = false;
 			//Vector that holds the direction toward prey
 			Vector3 targetHeading = Vector3(0.0f, 0.0f, 0.0f);
 			//Vector that holds the direction to travel this tick
 			Vector3 modifier = Vector3(0.0f, 0.0f, 0.0f);
 
-			//Loop through each BOID in myBoids
+			//Loop through each boid in myBoids
 			for (vector<Boid*>::iterator it2 = myBoids.begin(); it2 != myBoids.end(); ++it2)
 			{
-				//For ease of visibility, create a BOID pointer to hold the new current BOID
+				//For ease of visibility, create a boid pointer to hold the new current boid
 				Boid* newBoid = (*it2);
-				//Distance between two BOIDs
+				//Distance between two boids
 				float dist = (newBoid->GetPos() - currentBoid->GetPos()).Length();
-				//If the BOID is not currentBoid & the BOID is in sight range of currentBoid
+				//If the boid is not currentBoid & the boid is in sight range of currentBoid
 				if (currentBoid != newBoid && dist < currentBoid->getSight())
 				{
-					//If the new BOID is an obstacle
+					//If the new boid is an obstacle
 					if (newBoid->getType() == 0)
 					{
 						//If the currentBoid is within the obstacles sphere of influence
 						if (dist < SimulationParameters::obstacleSize)
 						{
-							//Create a vector pointing from the obstacle to the current BOID
+							//Create a vector pointing from the obstacle to the current boid
 							Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 							//Normalize the vector
 							contactModifier.Normalize();
 							//Set the currentBoid's direction to this vector
 							currentBoid->SetDirection(contactModifier);
-							//This BOID has been impeded by an obstacle
+							//This boid has been impeded by an obstacle
 							isImpeded = true;
 							//Leave for loop
 							break;
 						}
 					}
-					//If the current BOID is a lower type than the new BOID
+					//If the current boid is a lower type than the new boid
 					else if (currentBoid->getType() < newBoid->getType())
 					{
-						//Create a vector pointing from the new BOID to the current BOID
+						//Create a vector pointing from the new boid to the current boid
 						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
 						//Normalize the vector
 						fearModifier.Normalize();
 						//Add this fear vector to the modifier
 						modifier += fearModifier;
-						//Set the current BOID's speed to it's max speed
+						//Set the current boid's speed to it's max speed
 						currentBoid->SetSpeed(currentBoid->getMaxSpeed());
-						//This BOID has been impeded by fear
+						//This boid has been impeded by fear
 						isImpeded = true;
 					}
-					//If the current BOID is the same type as the new BOID
+					//If the current boid is the same type as the new boid
 					else if (currentBoid->getType() == newBoid->getType())
 					{
-						//If the two BOID's are colliding
+						//If the two boid's are colliding
 						if (dist < 20.0f)
 						{
-							//Create a vector pointing from the newBoid to the current BOID
+							//Create a vector pointing from the newBoid to the current boid
 							Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
 							//Normalize the vector
 							contactModifier.Normalize();
 							//Set the currentBoid's direction to this vector
 							currentBoid->SetDirection(contactModifier);
-							//This BOID has been impeded by an obstacle
+							//This boid has been impeded by an obstacle
 							isImpeded = true;
 							//Leave for loop
 							break;
 						}
-						//If the BOID's are within grouping range
+						//If the boid's are within grouping range
 						else if (dist < SimulationParameters::groupDistance)
 						{
-							//Add the new BOID's position to the average position vector
+							//Add the new boid's position to the average position vector
 							avPos += newBoid->GetPos();
-							//Add the new BOID's direction to the average direction vector
+							//Add the new boid's direction to the average direction vector
 							avDir += newBoid->getDirection();
 							//Increment the group count
 							count++;
 						}
 					}
-					//If the current BOID is a higher type than the new BOID
+					//If the current boid is a higher type than the new boid
 					else if (currentBoid->getType() > newBoid->getType())
 					{
-						//If the current BOID is in eating range of the new BOID
+						//If the current boid is in eating range of the new boid
 						if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < 10.0f)
 						{
-							//Damage the new BOID
+							//Damage the new boid
 							newBoid->Damage(100.0f);
-							//If the new BOID is dead
+							//If the new boid is dead
 							if (!newBoid->isAlive())
 							{
 								if (SimulationParameters::respawnOnDeath){
 									spawnBoid(newBoid->getType());
 								}
-								//Current BOID has just eaten
+								//Current boid has just eaten
 								currentBoid->Eat();
 							}
 						}
 						else
 						{
-							//Check if the current BOID has an outpost assigned to it, if it has only hunt the new BOID if it is within the outpost bounds
+							//Check if the current boid has an outpost assigned to it, if it has only hunt the new boid if it is within the outpost bounds
 							bool isHuntable = false;
 							if (currentBoid->GetOutpost() != nullptr){
 								if ((newBoid->GetPos() - currentBoid->GetOutpost()->GetPos()).Length() < currentBoid->GetOutpost()->getAreaOfInfluence())
@@ -538,45 +594,45 @@ void boidManager::Tick(GameData* GD)
 							}
 							if (isHuntable)
 							{
-								//Add the vector from the current BOID to the new BOID multiplied by 1/d*d to targetHeading where d is the distance between the BOIDs
+								//Add the vector from the current boid to the new boid multiplied by 1/d*d to targetHeading where d is the distance between the boids
 								targetHeading += (1.0f / (newBoid->GetPos() - currentBoid->GetPos()).LengthSquared()) * ((newBoid->GetPos() - currentBoid->GetPos()));
 								preyCount++;
 							}
 						}
-						//Set the current BOID's speed to it's max speed
+						//Set the current boid's speed to it's max speed
 						currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 					}
 				}
 			}
-			//If the current BOID has no prey to go after and it can group
+			//If the current boid has no prey to go after and it can group
 			if (targetHeading != Vector3::Zero && !isImpeded)
 			{
-				//Set the BOID's speed to it's max speed
+				//Set the boid's speed to it's max speed
 				currentBoid->SetSpeed(currentBoid->getMaxSpeed());
 				//Average the targetHeading vector
 				targetHeading /= (float)preyCount;
 				//Normalize the vector
 				targetHeading.Normalize();
-				//Set the current BOID's direction to targetHeading
+				//Set the current boid's direction to targetHeading
 				currentBoid->SetDirection(targetHeading);
-				//This BOID has been impeded by hunting
+				//This boid has been impeded by hunting
 				isImpeded = true;
 			}
 
-			//If there BOIDs nearby and it is not impeded
+			//If there boids nearby and it is not impeded
 			if (count > 0 && !isImpeded)
 			{
 				//Average avDir vector
 				avDir /= static_cast<float>(count);
 				//Average avPos vector
 				avPos /= static_cast<float>(count);
-				//Create a vector from the current BOID to the average position
+				//Create a vector from the current boid to the average position
 				Vector3 toAverage = currentBoid->GetPos() - (avPos + avDir * currentBoid->getSpeed());
 				//Normalize the vector
 				toAverage.Normalize();
-				//Set the group heading of this BOID to toAverage
+				//Set the group heading of this boid to toAverage
 				currentBoid->SetGroupHeading(toAverage);
-				//Set the group direction of this BOID to avDir
+				//Set the group direction of this boid to avDir
 				currentBoid->SetGroupDirection(avDir);
 				//Normalize the modifier
 				modifier.Normalize();
@@ -585,14 +641,14 @@ void boidManager::Tick(GameData* GD)
 				modifier += (avDir * SimulationParameters::groupHeading);
 			}
 
-			//If the current BOID is alive
+			//If the current boid is alive
 			if (currentBoid->isAlive())
 			{
 				//Normalize the modifier
 				modifier.Normalize();
 				
 				bool nothingToDo = true;
-				//If there is a finish point for this BOID then add it to the modifier
+				//If there is a finish point for this boid then add it to the modifier
 				if (currentBoid->GetFinish() != nullptr){
 					nothingToDo = false;
 					if (currentBoid->GetFinish()->returnToward(currentBoid).Length() < currentBoid->GetFinish()->getAreaOfInfluence())
@@ -606,12 +662,12 @@ void boidManager::Tick(GameData* GD)
 						modifier += 0.5f * currentBoid->GetFinish()->returnNormalizedToward(currentBoid);
 					}
 				}
-				//If there is no finish, check if there is an outpost the current BOID should go to
+				//If there is no finish, check if there is an outpost the current boid should go to
 				if (nothingToDo){
 				if (currentBoid->GetOutpost())
 					if (currentBoid->GetOutpost()->returnToward(currentBoid).Length() > currentBoid->GetOutpost()->getAreaOfInfluence())
 					{
-						//Set the current BOID's direction to the center modifier
+						//Set the current boid's direction to the center modifier
 						currentBoid->SetDirection(currentBoid->GetOutpost()->returnNormalizedToward(currentBoid));
 						modifier = Vector3::Zero; 
 					}
@@ -619,9 +675,9 @@ void boidManager::Tick(GameData* GD)
 				}
 				//If there is still nothing to do, make sure I'm near the center of the screen
 				if (nothingToDo){
-					//Create a vector from the current BOID to 0,0,0
+					//Create a vector from the current boid to 0,0,0
 					Vector3 centerModifier = Vector3(0.0f, 0.0f, 0.0f) - currentBoid->GetPos();
-					//If the BOID is outside the map
+					//If the boid is outside the map
 					if (centerModifier.Length() > (SimulationParameters::mapSize / 2))
 					{
 						//Normalize the center vector
@@ -631,18 +687,18 @@ void boidManager::Tick(GameData* GD)
 					}
 				}
 
-				//Add modifier to the BOID's current direction
+				//Add modifier to the boid's current direction
 				currentBoid->SetDirection(currentBoid->getDirection() + modifier);
-				//Tick the current BOID
+				//Tick the current boid
 				currentBoid->Tick(GD);
 				//Increment count
 				++firstLoop;
-				//Increment boidCount count for the current BOID's type
+				//Increment boidCount count for the current boid's type
 				boidCount[currentBoid->getType()]++;
 			}
 			else
 			{
-				//If the BOID is dead erase it from myBoids
+				//If the boid is dead erase it from myBoids
 				firstLoop = myBoids.erase(firstLoop);
 			}
 		}
@@ -659,10 +715,10 @@ void boidManager::Tick(GameData* GD)
 
 void boidManager::Draw(DrawData* DD)
 {
-	//Loop through each BOID in myBoids
+	//Loop through each boid in myBoids
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); ++it)
 	{
-		//Draw this BOID
+		//Draw this boid
 		(*it)->Draw(DD);
 	}
 	//Loop through each checkpoint

@@ -21,21 +21,21 @@ public:
 	virtual void Draw(DrawData* DD);
 	//Create the vertex buffer and initialize the object
 	virtual void initialize();
-	//Set the BOID's current speed
+	//Set the boid's current speed
 	void SetSpeed(float speed) { m_speed = speed; };
-	//Set the BOID's maximum speed
+	//Set the boid's maximum speed
 	void SetMaxSpeed(float speed) { max_speed = speed; };
-	//Set how far the BOID can see
+	//Set how far the boid can see
 	void SetSight(float sight) { m_sight = sight; };
-	//Set the direction the BOID is travelling
+	//Set the direction the boid is travelling
 	void SetDirection(Vector3 dir) { m_direction = dir; };
-	//Set the grouping direction of the BOID
+	//Set the grouping direction of the boid
 	void SetGroupDirection(Vector3 dir) { m_groupDirection = dir; };
-	//Set the grouping heading of the BOID
+	//Set the grouping heading of the boid
 	void SetGroupHeading(Vector3 dir) { m_groupHeading = dir; };
-	//Set the type of BOID
+	//Set the type of boid
 	void SetType(int type) { m_type = type; };
-	//Set how full the BOID is
+	//Set how full the boid is
 	void SetWeight(int w) { m_weight = w; };
 	//Set finish waypoint
 	void setFinish(Waypoint* _finish) { finish = _finish; };
@@ -47,47 +47,47 @@ public:
 	Waypoint* GetFinish() { return finish; };
 	//Get outpost waypoint
 	Waypoint* GetOutpost() { return outpost; };
-	//Get the BOID's current speed
+	//Get the boid's current speed
 	float getSpeed() { return m_speed; };
-	//Get the BOID's maximum speed
+	//Get the boid's maximum speed
 	float getMaxSpeed() { return max_speed; };
-	//Get the BOID's sight
+	//Get the boid's sight
 	float getSight() { return m_sight; };
-	//Get the BOID's current direction
+	//Get the boid's current direction
 	Vector3 getDirection() { return m_direction; };
-	//Get the BOID's current grouping direction
+	//Get the boid's current grouping direction
 	Vector3 getGroupDirection() { return m_groupDirection; };
-	//Get the BOID's current grouping heading
+	//Get the boid's current grouping heading
 	Vector3 getGroupHeading() { return m_groupHeading; };
-	//Get the BOID's type
+	//Get the boid's type
 	int getType() { return m_type; };
-	//Get the BOID's alive state
+	//Get the boid's alive state
 	bool isAlive() { return m_alive; };
-	//Get the BOID's current weight
+	//Get the boid's current weight
 	int getWeight() { return m_weight; };
-	//Get the BOID's current health
+	//Get the boid's current health
 	float getHealth() { return m_health; };
-	//Get the BOID's smooth yaw
+	//Get the boid's smooth yaw
 	float getSmoothYaw() { return smooth_yaw; };
-	//Get the BOID's scale
+	//Get the boid's scale
 	Vector3 GetScale() { return m_scale; };
-	//Get the BOID's scale
+	//Get the boid's scale
 	float GetFloatScale() { return (m_scale.x + m_scale.y + m_scale.z) / 3; };
 	//Nearest group position
 	Vector3 m_grouping;
 
-	//Damage the BOID and kill it if necessary
+	//Damage the boid and kill it if necessary
 	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
 	//Increment weight and increase physical size
 	void Eat();
 	//Decrement weight and decrease physical size
 	void Starve();
 protected:
-	//The BOID's hierarchial level
+	//The boid's hierarchial level
 	int m_type;
-	//The BOID's target finish
+	//The boid's target finish
 	Waypoint* finish;
-	//The BOID's target outpost
+	//The boid's target outpost
 	Waypoint* outpost;
 	//Current weight
 	int m_weight = 0;
@@ -97,7 +97,7 @@ protected:
 	Vector3 m_groupDirection;
 	//Group heading
 	Vector3 m_groupHeading;
-	//Is the BOID alive?
+	//Is the boid alive?
 	bool m_alive = true;
 	//Current health
 	float m_health = 100.0f; 
@@ -109,12 +109,12 @@ protected:
 	float m_sight = 100.0f;
 	//Value used to smppth out yaw
 	float smooth_yaw = 0.0f;
-	//Time BOID last ate
+	//Time boid last ate
 	ULONGLONG lastUpdateTickCount;
-	//Every vertex of this BOID
+	//Every vertex of this boid
 	myVertex* m_vertices;
 	//Force lines array
-	myVertex* lineVertices;
+	vector<myVertex> lineVertices;
 	//Small function to modify the VB to produce a coloured cone
 	virtual void ConeTransform(Color c)
 	{

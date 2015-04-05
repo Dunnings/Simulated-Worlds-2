@@ -20,6 +20,10 @@ public:
 	virtual void Draw(DrawData* _DD);
 	//Create and return a new boid of given type
 	Boid* spawnBoid(int type);
+	//Respawn current boid
+	Boid* respawnBoid(Boid* _b, bool keepPosition);
+	//Respawn all boids
+	void respawnAllBoids(bool keepPosition);
 	//Delete given boid
 	void deleteBoid(Boid* b);
 	//Delete first boid of given type
