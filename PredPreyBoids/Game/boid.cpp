@@ -9,6 +9,8 @@ Boid::Boid(Waypoint* _finish, Waypoint* _outpost)
 {
 	finish = _finish;
 	outpost = _outpost;
+	lastBreedTickCount = GetTickCount64();
+	lastUpdateTickCount = GetTickCount64();
 }
 
 void Boid::initialize()
@@ -127,27 +129,27 @@ void Boid::initialize()
 	}
 	
 	//Change the boids to be different colour shapes using a transform
-	if (m_type == 0)
+	if (m_type->id == 0)
 	{
 		SphereTransform(Color(1.0f, 1.0f, 1.0f));
 	}
-	else if (m_type == 1)
+	else if (m_type->id == 1)
 	{
 		ConeTransform(Color(0.0f, 0.0f, 1.0f));
 	}
-	else if (m_type == 2)
+	else if (m_type->id == 2)
 	{
 		ConeTransform(Color(0.0f, 1.0f, 0.0f));
 	}
-	else if (m_type == 3)
+	else if (m_type->id == 3)
 	{
 		ConeTransform(Color(1.0f, 0.0f, 0.0f));
 	}
-	else if (m_type == 4)
+	else if (m_type->id == 4)
 	{
 		ConeTransform(Color(0.0f, 1.0f, 1.0f));
 	}
-	else if (m_type == 5)
+	else if (m_type->id == 5)
 	{
 		ConeTransform(Color(1.0f, 0.0f, 1.0f));
 	}
@@ -204,13 +206,18 @@ void Boid::Starve(){
 	lastUpdateTickCount = GetTickCount64();
 }
 
+void Boid::Breed()
+{
+	lastBreedTickCount = GetTickCount64();
+}
+
 void Boid::Tick(GameData* GD)
 {
 	//If the simulation is running
 	if (GD->GS == GS_PLAY_PLAY)
 	{
 		//If this boid is not an obstacle
-		if (m_type != 0)
+		if (m_type->id != 0)
 		{
 			//If the boid has eaten
 			if (m_weight > 1)
@@ -286,7 +293,7 @@ void Boid::Draw(DrawData* DD)
 			//Initialize second vertex position
 			Vector3 second;
 			//Define a color to use for every vertex based on the type of waypoint
-			Color c = Color(0.0f, 1.0f, 0.0f);
+			Color c = Color(0.5f, 1.0f, 1.0f);
 
 			//Loop through for each side
 			for (unsigned short i = 0; i <= sides; ++i)

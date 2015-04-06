@@ -13,6 +13,7 @@ boidManager::boidManager()
 {
 
 	loadMap();
+	loadTypes();
 	lastSpawnTime = GetTickCount64();
 
 	//If given a boidcount then generate boids based on this
@@ -41,6 +42,92 @@ boidManager::~boidManager()
 
 }
 
+void boidManager::loadTypes()
+{
+	ifstream typeFile;
+	//Open the file
+	typeFile.open(typesFileName);
+	//If the file successfully opened
+	if (typeFile.is_open())
+	{
+		//Loop through each line in the file
+		while (!typeFile.eof())
+		{
+			//Get the current line of the file
+			string currentLine;
+			getline(typeFile, currentLine);
+
+			//We have reached a waypoint declaration
+			if (currentLine == "<type>")
+			{
+				Type* t = new Type();
+
+				while (currentLine != "</type>" && !typeFile.eof())
+				{
+					//Move to next line
+					getline(typeFile, currentLine);
+					if (currentLine.find("<id>") != string::npos && currentLine.find("</id>") != string::npos)
+					{
+						int start = currentLine.find("<id>") + 4;
+						int end = currentLine.find("</id>");
+						t->id = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<scale>") != string::npos && currentLine.find("</scale>") != string::npos)
+					{
+						int start = currentLine.find("<scale>") + 7;
+						int end = currentLine.find("</scale>");
+						t->scale = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<sight>") != string::npos && currentLine.find("</sight>") != string::npos)
+					{
+						int start = currentLine.find("<sight>") + 7;
+						int end = currentLine.find("</sight>");
+						t->sight = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<breedDelay>") != string::npos && currentLine.find("</breedDelay>") != string::npos)
+					{
+						int start = currentLine.find("<breedDelay>") + 12;
+						int end = currentLine.find("</breedDelay>");
+						t->breedDelay = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<speed>") != string::npos && currentLine.find("</speed>") != string::npos)
+					{
+						int start = currentLine.find("<speed>") + 7;
+						int end = currentLine.find("</speed>");
+						t->speed = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<health>") != string::npos && currentLine.find("</health>") != string::npos)
+					{
+						int start = currentLine.find("<health>") + 8;
+						int end = currentLine.find("</health>");
+						t->health = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<prey>") != string::npos && currentLine.find("</prey>") != string::npos)
+					{
+						int start = currentLine.find("<prey>") + 6;
+						int end = currentLine.find("</prey>");
+						t->prey.push_back(stoi(currentLine.substr(start, end - start)));
+					}
+					
+				}
+				bool typeExists = false;
+				for (vector<Type*>::iterator it = m_types.begin(); it != m_types.end(); it++)
+				{
+					if ((*it)->id == t->id)
+					{
+						(*it) = t;
+						typeExists = true;
+						break;
+					}
+				}
+				if (!typeExists)
+				{
+					m_types.push_back(t);
+				}
+			}
+		}
+	}
+}
 
 void boidManager::loadMap(){
 	ifstream mapFile;
@@ -130,6 +217,7 @@ void boidManager::loadMap(){
 				}
 				Boid* b = spawnBoid(0);
 				b->SetPos(pos);
+				myBoids.push_back(b);
 			}
 		}
 	}
@@ -167,8 +255,23 @@ void boidManager::deleteAllWaypoints(){
 	m_waypoints.clear();
 }
 
+void boidManager::breedBoids(Boid* a, Boid* b)
+{
+	if (a->isAlive() && b->isAlive())
+	{
+		if (a->GetLastBreedTime() >= SimulationParameters::breedDelay && b->GetLastBreedTime() > SimulationParameters::breedDelay)
+		{
+			
+			Boid* baby = spawnBoid(a->getType()->id);
+			a->Breed();
+			b->Breed();
+			baby->SetPos(a->GetPos());
+		}
+	}
+}
+
 Boid* boidManager::respawnBoid(Boid* b, bool keepPos){
-	Boid* b2 = spawnBoid(b->getType());
+	Boid* b2 = spawnBoid(b->getType()->id);
 	if (keepPos){
 		b2->SetPos(b->GetPos());
 	}
@@ -181,7 +284,7 @@ void boidManager::respawnAllBoids(bool keepPos){
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
 		//Spawn new boid
-		Boid* b2 = spawnBoid((*it)->getType());
+		Boid* b2 = spawnBoid((*it)->getType()->id);
 		if (keepPos){
 			b2->SetPos((*it)->GetPos());
 		}
@@ -191,6 +294,56 @@ void boidManager::respawnAllBoids(bool keepPos){
 
 Boid* boidManager::spawnBoid(int type)
 {
+	Type* t = nullptr;
+	//See if this type is defined
+	for (vector<Type*>::iterator it = m_types.begin(); it != m_types.end(); it++)
+	{
+		if ((*it)->id == type)
+		{
+			t = (*it);
+			break;
+		}
+	}
+
+	//We didn't find a type in m_types
+	if (t == nullptr)
+	{
+		t = new Type();
+		t->id = type;
+		t->breedDelay = SimulationParameters::breedDelay;
+		t->health = 100.0f;
+		t->scale = 1.0f;
+		if (type == 0)
+		{
+			t->canBreed = false;
+		}
+		else
+		{
+			t->canBreed = true;
+			t->speed = SimulationParameters::boidMaxSpeed;
+			t->sight = (100.0f * type) / 2;
+		}
+
+		if (type > 1)
+		{
+			t->prey.push_back(1);
+		}
+		if (type > 2)
+		{
+			t->prey.push_back(2);
+		}
+		if (type > 3)
+		{
+			t->prey.push_back(3);
+		}
+		if (type > 4)
+		{
+			t->prey.push_back(4);
+		}
+		m_types.push_back(t);
+	}
+
+
 	//Initilize waypoint variables
 	Vector3 startPos = Vector3(0.0f, 0.0f, 0.0f);
 	Waypoint* outpost = nullptr;
@@ -284,7 +437,7 @@ Boid* boidManager::spawnBoid(int type)
 	//Dynamically create a new boid
 	Boid* newBoid = new Boid(finish, outpost);
 	//Set the max speed to the pre-determined value
-	newBoid->SetMaxSpeed(SimulationParameters::boidMaxSpeed * type);
+	newBoid->SetMaxSpeed(t->speed);
 
 	if(startPos == Vector3(0.0f, 0.0f, 0.0f)){
 		//Create four random floats between -1.0 and 1.0 
@@ -303,15 +456,16 @@ Boid* boidManager::spawnBoid(int type)
 	}
 	//Set speed to half max speed
 	newBoid->SetSpeed(((SimulationParameters::boidMaxSpeed*type) / 2));
+	//Set speed to half max speed
+	newBoid->SetSight(t->sight);
 	//Set the boid type
-	newBoid->SetType(type);
+	newBoid->SetType(t);
 	//Initialise boid vertex buffer
 	newBoid->initialize();
 	//Scale down prey
-	if (type == 1)
-	{
-		newBoid->SetScale(0.6f);
-	}
+	newBoid->SetScale(t->scale);
+	//Set Breed Delay
+	newBoid->setBreedDelay(t->breedDelay);
 	//Add boid to manager's vector
 	toSpawn.push_back(newBoid);
 	//Return the created boid
@@ -352,7 +506,7 @@ void boidManager::deleteBoid(int type){
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
 		//If the current boid is the same type as the given type
-		if ((*it)->getType() == type)
+		if ((*it)->getType()->id = type)
 		{
 			//Delete this boid and stop searching
 			(*it) = nullptr;
@@ -399,12 +553,12 @@ Boid* boidManager::getHighestBOID()
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end(); it++)
 	{
 		//If this boid's type is higher than type
-		if ((*it)->getType() > type)
+		if ((*it)->getType()->id > type)
 		{
 			//Set the boid to return to this one
 			toReturn = (*it);
 			//Set the type to this boid's type
-			type = toReturn->getType();
+			type = toReturn->getType()->id;
 		}
 	}
 	//Return the highest boid
@@ -501,7 +655,7 @@ void boidManager::Tick(GameData* GD)
 				if (currentBoid != newBoid && dist < currentBoid->getSight())
 				{
 					//If the new boid is an obstacle
-					if (newBoid->getType() == 0)
+					if (newBoid->getType()->id == 0)
 					{
 						//If the currentBoid is within the obstacles sphere of influence
 						if (dist < SimulationParameters::obstacleSize)
@@ -518,8 +672,8 @@ void boidManager::Tick(GameData* GD)
 							break;
 						}
 					}
-					//If the current boid is a lower type than the new boid
-					else if (currentBoid->getType() < newBoid->getType())
+					//If the current Boid is in the prey vector of the new boid
+					else if (find(newBoid->getType()->prey.begin(), newBoid->getType()->prey.end(), currentBoid->getType()->id) != newBoid->getType()->prey.end())
 					{
 						//Create a vector pointing from the new boid to the current boid
 						Vector3 fearModifier = (currentBoid->GetPos() - newBoid->GetPos());
@@ -533,7 +687,7 @@ void boidManager::Tick(GameData* GD)
 						isImpeded = true;
 					}
 					//If the current boid is the same type as the new boid
-					else if (currentBoid->getType() == newBoid->getType())
+					else if (currentBoid->getType()->id == newBoid->getType()->id)
 					{
 						//If the two boid's are colliding
 						if (dist < 20.0f)
@@ -558,10 +712,16 @@ void boidManager::Tick(GameData* GD)
 							avDir += newBoid->getDirection();
 							//Increment the group count
 							count++;
+
+							//Breeding
+							if (currentBoid->getBreedStatus())
+							{
+								breedBoids(currentBoid, newBoid);
+							}
 						}
 					}
-					//If the current boid is a higher type than the new boid
-					else if (currentBoid->getType() > newBoid->getType())
+					//If the current boid's type contains the new boid's type in its prey vector
+					else if (find(currentBoid->getType()->prey.begin(), currentBoid->getType()->prey.end(), newBoid->getType()->id) != currentBoid->getType()->prey.end())
 					{
 						//If the current boid is in eating range of the new boid
 						if ((newBoid->GetPos() - currentBoid->GetPos()).Length() < 10.0f)
@@ -572,7 +732,7 @@ void boidManager::Tick(GameData* GD)
 							if (!newBoid->isAlive())
 							{
 								if (SimulationParameters::respawnOnDeath){
-									spawnBoid(newBoid->getType());
+									spawnBoid(newBoid->getType()->id);
 								}
 								//Current boid has just eaten
 								currentBoid->Eat();
@@ -654,7 +814,7 @@ void boidManager::Tick(GameData* GD)
 					if (currentBoid->GetFinish()->returnToward(currentBoid).Length() < currentBoid->GetFinish()->getAreaOfInfluence())
 					{
 						if (SimulationParameters::respawnOnFinish){
-							spawnBoid(currentBoid->getType());
+							spawnBoid(currentBoid->getType()->id);
 						}
 						currentBoid->Damage(100.0f);
 					}
@@ -694,7 +854,7 @@ void boidManager::Tick(GameData* GD)
 				//Increment count
 				++firstLoop;
 				//Increment boidCount count for the current boid's type
-				boidCount[currentBoid->getType()]++;
+				boidCount[currentBoid->getType()->id]++;
 			}
 			else
 			{

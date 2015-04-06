@@ -4,6 +4,7 @@
 #include <dinput.h>
 #include <map>
 #include <d3d11.h>
+#include <vector>
 
 class MyEffectFactory;
 
@@ -20,6 +21,18 @@ struct GameData
 	static MyEffectFactory* EF;
 };
 
+struct Type
+{
+	int id;
+	int scale;
+	float breedDelay;
+	bool canBreed;
+	float speed;
+	float sight;
+	float health;
+	std::vector<int> prey;
+};
+
 struct SimulationParameters
 {
 	static float groupStrength; //How strong is the grouping
@@ -29,6 +42,7 @@ struct SimulationParameters
 	static float obstacleSize; //Sphere of influence for obstacles
 	static float mapSize; //Map bounds
 	static float spawnDelay; //How often do boids spawn
+	static float breedDelay; //How often do boids spawn
 	static bool respawnOnFinish; //Once the boid has reached it's finish should it respawn?
 	static bool respawnOnDeath; //If killed, should the boid respawn?
 	static bool cursorObstacle; //Is the cursor an obstacle

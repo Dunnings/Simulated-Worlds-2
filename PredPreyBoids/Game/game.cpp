@@ -26,6 +26,7 @@ map<int, int> SimulationParameters::boidCount;
 float SimulationParameters::obstacleSize;
 float SimulationParameters::mapSize;
 float SimulationParameters::spawnDelay;
+float SimulationParameters::breedDelay;
 bool SimulationParameters::respawnOnFinish;
 bool SimulationParameters::respawnOnDeath;
 bool SimulationParameters::cursorObstacle;
@@ -48,6 +49,7 @@ void Game::loadParameters()
 	para.mapSize = 500.0f;
 	para.starvationTime = 5000.0f;
 	para.spawnDelay = 0.0f;
+	para.breedDelay = 10000.0f;
 	para.showDebugMenu = true;
 	para.showDebugForces = true;
 	para.showDebugSight = true;
@@ -115,6 +117,10 @@ void Game::loadParameters()
 				{
 					para.spawnDelay = stof(value);
 				}
+				else if (parameter == "breedDelay")
+				{
+					para.breedDelay = stof(value);
+				}
 				else if (parameter == "showDebugMenu")
 				{
 					para.showDebugMenu = (value == "true");
@@ -158,6 +164,8 @@ void Game::loadParameters()
 		outputFile << "boidMaxSpeed = " << para.boidMaxSpeed;
 		outputFile << "mapSize = " << para.mapSize;
 		outputFile << "starvationTime = " << para.starvationTime;
+		outputFile << "spawnDelay = " << para.spawnDelay;
+		outputFile << "breedDelay = " << para.breedDelay;
 		outputFile << "showDebugMenu = " << para.showDebugMenu;
 		outputFile << "showDebugForces = " << para.showDebugForces;
 		outputFile << "showDebugSight = " << para.showDebugSight;
@@ -298,10 +306,100 @@ bool Game::update()
 	ReadKeyboard();
 	ReadMouse();
 
+	if (m_mouse_state.rgbButtons[0] & 0x80 && !(m_prev_mouse_state.rgbButtons[0] & 0x80))
+	{
+		POINT mousePos;
+		GetCursorPos(&mousePos);
+		if (mousePos.x <= 380)
+		{
+			if (SimulationParameters::showDebugMenu)
+			{
+				if (mousePos.y <= 345 && mousePos.y >= 330)
+				{
+					//Clicked respawn on death
+					SimulationParameters::showDebugForces = !SimulationParameters::showDebugForces;
+				}
+				else if (mousePos.y <= 365 && mousePos.y >= 350)
+				{
+					//Clicked respawn on death
+					SimulationParameters::showDebugSight = !SimulationParameters::showDebugSight;
+				}
+				else if (mousePos.y <= 385 && mousePos.y >= 370)
+				{
+					//Clicked respawn on death
+					SimulationParameters::showDebugWaypoints = !SimulationParameters::showDebugWaypoints;
+				}
+				else if (mousePos.y <= 405 && mousePos.y >= 390)
+				{
+					//Clicked respawn on death
+					SimulationParameters::respawnOnDeath = !SimulationParameters::respawnOnDeath;
+				}
+				else if (mousePos.y <= 425 && mousePos.y >= 410)
+				{
+					//Clicked respawn on death
+					SimulationParameters::respawnOnFinish = !SimulationParameters::respawnOnFinish;
+				}
+				else if (mousePos.y <= 445 && mousePos.y >= 430)
+				{
+					//Clicked respawn on death
+					SimulationParameters::spawnDelay += 200.0f;
+				}
+				else if (mousePos.y <= 465 && mousePos.y >= 450)
+				{
+					//Clicked respawn on death
+					spawnPerPress++;
+				}
+			}
+			else
+			{
+				if (mousePos.y <= 75 && mousePos.y >= 50)
+				{
+					//Clicked respawn on death
+					SimulationParameters::showDebugMenu = !SimulationParameters::showDebugMenu;
+				}
+			}
+		}
+	}
+	//Right click
+	else
+	{
+		if (m_mouse_state.rgbButtons[1] & 0x80 && !(m_prev_mouse_state.rgbButtons[1] & 0x80))
+		{
+			POINT mousePos;
+			GetCursorPos(&mousePos);
+			if (mousePos.x <= 380)
+			{
+				if (SimulationParameters::showDebugMenu)
+				{
+					if (mousePos.y <= 445 && mousePos.y >= 430)
+					{
+						if (SimulationParameters::spawnDelay > 0)
+						{
+							SimulationParameters::spawnDelay -= 200.0f;
+						}
+					}
+					else if (mousePos.y <= 465 && mousePos.y >= 450)
+					{
+						if (spawnPerPress > 0)
+						{
+							spawnPerPress--;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	//Exit the simulation
 	if (m_keyboardState[DIK_ESCAPE] & 0x80 || m_mouse_state.rgbButtons[2] & 0x80)
 	{
 		return false;
+	}
+
+	//Toggle spawn/kill
+	if ((m_keyboardState[DIK_DELETE] & 0x80) && !(m_prevKeyboardState[DIK_DELETE] & 0x80))
+	{
+		spawn = !spawn;
 	}
 
 	//Toggle cursor obstacle
@@ -377,13 +475,6 @@ bool Game::update()
 
 	//Initialize type as high number so it can be used to check if 1-5 was pressed
 	int type = 9999;
-	//Boolean to decide whether to kill or spawn
-	bool isShiftHeld = false;
-	//If shift is down set boolean to true
-	if (m_keyboardState[DIK_LSHIFT] & 0x80)
-	{
-		isShiftHeld = true;
-	}
 	//Change type based on key pressed
 	if ((m_keyboardState[DIK_0] & 0x80) && !(m_prevKeyboardState[DIK_0] & 0x80))
 	{
@@ -413,7 +504,7 @@ bool Game::update()
 	if (type != 9999)
 	{
 		//If killing
-		if (isShiftHeld)
+		if (!spawn)
 		{
 			//Kill x boids of type
 			for (int i = 0; i < spawnPerPress; i++)
@@ -438,39 +529,20 @@ bool Game::update()
 	{
 		SimulationParameters::showDebugMenu = !SimulationParameters::showDebugMenu;
 	}
-	//Toggle debug forces
-	if ((m_keyboardState[DIK_F2] & 0x80) && !(m_prevKeyboardState[DIK_F2] & 0x80))
-	{
-		SimulationParameters::showDebugForces = !SimulationParameters::showDebugForces;
-	}
-	//Toggle debug sight
-	if ((m_keyboardState[DIK_F3] & 0x80) && !(m_prevKeyboardState[DIK_F3] & 0x80))
-	{
-		SimulationParameters::showDebugSight = !SimulationParameters::showDebugSight;
-	}
-	//Toggle debug waypoints
-	if ((m_keyboardState[DIK_F4] & 0x80) && !(m_prevKeyboardState[DIK_F4] & 0x80))
-	{
-		SimulationParameters::showDebugWaypoints = !SimulationParameters::showDebugWaypoints;
-	}
 	//Reload parameters
 	if ((m_keyboardState[DIK_F5] & 0x80) && !(m_prevKeyboardState[DIK_F5] & 0x80))
 	{
 		loadParameters();
+		boidMan->loadMap();
+		boidMan->loadTypes();
+		boidMan->respawnAllBoids(true);
 	}
-	//Open parameters file
+	/*Open parameters file
 	if ((m_keyboardState[DIK_F6] & 0x80) && !(m_prevKeyboardState[DIK_F6] & 0x80))
 	{
 		string cmd = "notepad.exe " + fileName;
 		system(cmd.c_str());
 		loadParameters();
-	}
-	//Reload wayPoints
-	if ((m_keyboardState[DIK_F7] & 0x80) && !(m_prevKeyboardState[DIK_F7] & 0x80))
-	{
-		boidMan->deleteAllWaypoints();
-		boidMan->loadMap();
-		boidMan->respawnAllBoids(true);
 	}
 	//Open map file
 	if ((m_keyboardState[DIK_F8] & 0x80) && !(m_prevKeyboardState[DIK_F8] & 0x80))
@@ -480,6 +552,7 @@ bool Game::update()
 		system(cmd.c_str());
 		boidMan->loadMap();
 	}
+	*/
 	//Delete all boids
 	if ((m_keyboardState[DIK_F9] & 0x80) && !(m_prevKeyboardState[DIK_F9] & 0x80))
 	{
@@ -524,171 +597,149 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		(*it)->draw(m_DD2D);
 	}
 	//Draw debug text
+	DirectX::XMVECTOR textColor = Colors::Green;
 	if (SimulationParameters::showDebugMenu){
 		stringstream sstm;
 		float yPos = 10.0f;
 		sstm << "~ Debug Menu ~";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 40.0f;
-
-		sstm << "~ Booleans ~";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		string tempS = "False";
-		if (loadedFile){ tempS = "True"; }
-		sstm << "Loaded from file: " << tempS;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		tempS = "False";
-		if (SimulationParameters::cursorObstacle){ tempS = "True"; }
-		sstm << "Mouse is obstacle: " << tempS;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::SlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 40.0f;
 
 		sstm << "~ Controls ~";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F1] - Toggle debug menu";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[F1] - Toggle Menu";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F2] - Toggle debug forces";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[F5] - Reload Settings";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F3] - Toggle debug sight range";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[F9] - Kill Everything";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F4] - Toggle debug waypoints";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[Tab] - Toggle Obstacle Mouse";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F5] - Update parameters from file";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[1-5] - Spawn/Kill " << spawnPerPress << " boid(s)";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F6] - Open parameters file";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[Delete] - Toggle Spawn/Kill";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F7] - Update waypoints from file";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[+/-] Modify Affected Quantity";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F8] - Open waypoints file";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[Enter] - Switch Camera";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "[F9] - Delete all boids";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[TAB] - Toggle obstacle cursor";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[1-5] - Spawn " << spawnPerPress << " boid(s)";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[Shift + 1-5] - Delete " << spawnPerPress << " boid(s)";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[+/-] Modify spawn per press";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[Space] Pause/unpause simulation";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "[Enter] - Switch camera";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "[Space] Play/Pause";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 40.0f;
 
-		sstm << "~ Simulation Parameters ~";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm << "~ Simulation Settings ~";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
-		sstm << "Spawn per key press: " << spawnPerPress;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Time between spawns: " << SimulationParameters::spawnDelay;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Time to starve: " << SimulationParameters::starvationTime;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Max speed: " << SimulationParameters::boidMaxSpeed;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Group size: " << SimulationParameters::groupDistance;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Group strength: " << SimulationParameters::groupStrength;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
-		sstm.str(std::string());
-		yPos += 20.0f;
-
-		sstm << "Group direction matching strength: " << SimulationParameters::groupHeading;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		string tempS = "False";
+		XMVECTOR tempColor = Colors::Red;
+		if (SimulationParameters::showDebugForces) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Display Force Arrows: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
 		tempS = "False";
-		if (SimulationParameters::respawnOnDeath){ tempS = "True"; }
-		sstm << "Respawn on death: " << tempS;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		tempColor = Colors::Red;
+		if (SimulationParameters::showDebugSight) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Display Sight Range: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 20.0f;
 
 		tempS = "False";
-		if (SimulationParameters::respawnOnFinish){ tempS = "True"; }
-		sstm << "Respawn on finish: " << tempS;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		tempColor = Colors::Red;
+		if (SimulationParameters::showDebugWaypoints) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Display Waypoints: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		tempS = "False";
+		tempColor = Colors::Red;
+		if (SimulationParameters::respawnOnDeath) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Respawn On Death: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		tempS = "False";
+		tempColor = Colors::Red;
+		if (SimulationParameters::respawnOnFinish) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Respawn On Finish: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Breed Delay: " << SimulationParameters::breedDelay;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Spawn Delay: " << SimulationParameters::spawnDelay;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 40.0f;
+
+		sstm << "~ Boid Settings ~";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Max Speed (Tier 1): " << SimulationParameters::boidMaxSpeed;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Flock Size: " << SimulationParameters::groupDistance;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Flocking Strength: " << SimulationParameters::groupStrength;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 20.0f;
+
+		sstm << "Velocity Matching Strength: " << SimulationParameters::groupHeading;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
 		yPos += 40.0f;
 
 		if (SimulationParameters::boidCount.size() > 0)
 		{
-			sstm << "~ boid tally ~";
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "~ Tally ~";
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 		}
@@ -696,7 +747,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++)
 		{
 			sstm << "# of type [" << (*it).first << "]: " << (*it).second;
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 		}
@@ -705,48 +756,55 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 			yPos += 20.0f;
 		}
 
+		POINT mouse;
+		GetCursorPos(&mouse);
+		sstm << "Mouse Position: x:" << mouse.x << " y:" << mouse.y;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		sstm.str(std::string());
+		yPos += 40.0f;
+
 		if (m_DD->cam == m_predCamera && m_predCamera->GetTarget() != nullptr && m_predCamera->GetTarget()->isAlive())
 		{
-			sstm << "~ Current boid ~";
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "~ Selected Unit ~";
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Current health: " << m_predCamera->GetTarget()->getHealth();
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Current Health: " << m_predCamera->GetTarget()->getHealth();
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Current weight: " << m_predCamera->GetTarget()->getWeight();
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Current Weight: " << m_predCamera->GetTarget()->getWeight();
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Current speed: " << m_predCamera->GetTarget()->getSpeed();
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Current Speed: " << m_predCamera->GetTarget()->getSpeed();
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Maximum speed: " << m_predCamera->GetTarget()->getMaxSpeed();
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Maximum Speed: " << m_predCamera->GetTarget()->getMaxSpeed();
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Current position (x,y,z): " << m_predCamera->GetTarget()->GetPos().x << ", " << m_predCamera->GetTarget()->GetPos().y << ", " << m_predCamera->GetTarget()->GetPos().z;
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Current Position (x,y,z): " << m_predCamera->GetTarget()->GetPos().x << ", " << m_predCamera->GetTarget()->GetPos().y << ", " << m_predCamera->GetTarget()->GetPos().z;
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 
-			sstm << "Current direction (x,y,z): " << m_predCamera->GetTarget()->getDirection().x << ", " << m_predCamera->GetTarget()->getDirection().y << ", " << m_predCamera->GetTarget()->getDirection().z;
-			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+			sstm << "Current Direction (x,y,z): " << m_predCamera->GetTarget()->getDirection().x << ", " << m_predCamera->GetTarget()->getDirection().y << ", " << m_predCamera->GetTarget()->getDirection().z;
+			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 20.0f;
 		}
 	}
 	else
 	{
-		string s = "[F1] - Toggle debug menu";
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(s.c_str()), Vector2(10, 10), Colors::Green, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		string s = "[F1] - Toggle Debug Menu";
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(s.c_str()), Vector2(10, 10), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 	}
 	//End drawing
 	m_DD2D->m_Sprites->End();

@@ -34,13 +34,17 @@ public:
 	//Set the grouping heading of the boid
 	void SetGroupHeading(Vector3 dir) { m_groupHeading = dir; };
 	//Set the type of boid
-	void SetType(int type) { m_type = type; };
+	void SetType(Type* type) { m_type = type; };
+	//Set time between breeding
+	void setBreedDelay(float _d) { breedDelay = _d; };
 	//Set how full the boid is
 	void SetWeight(int w) { m_weight = w; };
 	//Set finish waypoint
 	void setFinish(Waypoint* _finish) { finish = _finish; };
 	//Set outpost waypoint
 	void setOutpost(Waypoint* _outpost) { outpost = _outpost; };
+	//Boid has bred
+	void Breed();
 
 
 	//Get finish waypoint
@@ -60,13 +64,17 @@ public:
 	//Get the boid's current grouping heading
 	Vector3 getGroupHeading() { return m_groupHeading; };
 	//Get the boid's type
-	int getType() { return m_type; };
+	Type* getType() { return m_type; };
 	//Get the boid's alive state
 	bool isAlive() { return m_alive; };
+	//Can this boid breed?
+	bool getBreedStatus() { if (GetTickCount64() - lastBreedTickCount > breedDelay) { return true; } return false; };
 	//Get the boid's current weight
 	int getWeight() { return m_weight; };
 	//Get the boid's current health
 	float getHealth() { return m_health; };
+	//Get last time boid bred
+	ULONGLONG GetLastBreedTime() { return lastBreedTickCount; };
 	//Get the boid's smooth yaw
 	float getSmoothYaw() { return smooth_yaw; };
 	//Get the boid's scale
@@ -84,7 +92,7 @@ public:
 	void Starve();
 protected:
 	//The boid's hierarchial level
-	int m_type;
+	Type* m_type;
 	//The boid's target finish
 	Waypoint* finish;
 	//The boid's target outpost
@@ -111,6 +119,10 @@ protected:
 	float smooth_yaw = 0.0f;
 	//Time boid last ate
 	ULONGLONG lastUpdateTickCount;
+	//Time boid last bred
+	ULONGLONG lastBreedTickCount;
+	//How often can this boid breed?
+	float breedDelay;
 	//Every vertex of this boid
 	myVertex* m_vertices;
 	//Force lines array

@@ -20,6 +20,8 @@ public:
 	virtual void Draw(DrawData* _DD);
 	//Create and return a new boid of given type
 	Boid* spawnBoid(int type);
+	//Breed boids
+	void breedBoids(Boid* a, Boid* b);
 	//Respawn current boid
 	Boid* respawnBoid(Boid* _b, bool keepPosition);
 	//Respawn all boids
@@ -35,9 +37,16 @@ public:
 	//Create a waypoint
 	void addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi);
 	void addWaypoint(Waypoint* w);
+	//Delete all waypoints
 	void deleteAllWaypoints();
+	//Load waypoints from file
 	void loadMap();
+	//Load types from file
+	void loadTypes();
+	//Waypoint file name
 	string mapFileName = "levelData.dat";
+	//Types file name
+	string typesFileName = "types.dat";
 private:
 	//Vector containing all boids waiting to be spawned
 	vector<Boid*> toSpawn;
@@ -47,6 +56,8 @@ private:
 	Boid* cursor = nullptr;
 	//Waypoints
 	vector<Waypoint*> m_waypoints;
+	//Types
+	vector<Type*> m_types;
 	//Last spawn time
 	ULONGLONG lastSpawnTime;
 };
