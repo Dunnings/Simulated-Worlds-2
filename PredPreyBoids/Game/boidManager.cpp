@@ -11,30 +11,7 @@ MyEffectFactory* GameData::EF;
 
 boidManager::boidManager()
 {
-
-	loadMap();
-	loadTypes();
 	lastSpawnTime = GetTickCount64();
-
-	//If given a boidcount then generate boids based on this
-	if (SimulationParameters::boidCount.size() > 0){
-		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++){
-			for (int i = 0; i < (*it).second; i++){
-				spawnBoid((*it).second);
-			}
-		}
-	}
-	else{
-		//Otherwise spawn default amount
-		for (int i = 0; i < 100; i++)
-		{
-			spawnBoid(1);
-		}
-		for (int i = 0; i < 2; i++)
-		{
-			spawnBoid(2);
-		}
-	}
 }
 
 boidManager::~boidManager()
@@ -42,187 +19,23 @@ boidManager::~boidManager()
 
 }
 
-void boidManager::loadTypes()
+void boidManager::addType(Type* t)
 {
-	ifstream typeFile;
-	//Open the file
-	typeFile.open(typesFileName);
-	//If the file successfully opened
-	if (typeFile.is_open())
+	bool typeExists = false;
+	for (vector<Type*>::iterator it = m_types.begin(); it != m_types.end(); it++)
 	{
-		//Loop through each line in the file
-		while (!typeFile.eof())
+		if ((*it)->id == t->id)
 		{
-			//Get the current line of the file
-			string currentLine;
-			getline(typeFile, currentLine);
-
-			//We have reached a waypoint declaration
-			if (currentLine == "<type>")
-			{
-				Type* t = new Type();
-
-				while (currentLine != "</type>" && !typeFile.eof())
-				{
-					//Move to next line
-					getline(typeFile, currentLine);
-					if (currentLine.find("<id>") != string::npos && currentLine.find("</id>") != string::npos)
-					{
-						int start = currentLine.find("<id>") + 4;
-						int end = currentLine.find("</id>");
-						t->id = stoi(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<scale>") != string::npos && currentLine.find("</scale>") != string::npos)
-					{
-						int start = currentLine.find("<scale>") + 7;
-						int end = currentLine.find("</scale>");
-						t->scale = stoi(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<sight>") != string::npos && currentLine.find("</sight>") != string::npos)
-					{
-						int start = currentLine.find("<sight>") + 7;
-						int end = currentLine.find("</sight>");
-						t->sight = stoi(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<breedDelay>") != string::npos && currentLine.find("</breedDelay>") != string::npos)
-					{
-						int start = currentLine.find("<breedDelay>") + 12;
-						int end = currentLine.find("</breedDelay>");
-						t->breedDelay = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<speed>") != string::npos && currentLine.find("</speed>") != string::npos)
-					{
-						int start = currentLine.find("<speed>") + 7;
-						int end = currentLine.find("</speed>");
-						t->speed = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<health>") != string::npos && currentLine.find("</health>") != string::npos)
-					{
-						int start = currentLine.find("<health>") + 8;
-						int end = currentLine.find("</health>");
-						t->health = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<prey>") != string::npos && currentLine.find("</prey>") != string::npos)
-					{
-						int start = currentLine.find("<prey>") + 6;
-						int end = currentLine.find("</prey>");
-						t->prey.push_back(stoi(currentLine.substr(start, end - start)));
-					}
-					
-				}
-				bool typeExists = false;
-				for (vector<Type*>::iterator it = m_types.begin(); it != m_types.end(); it++)
-				{
-					if ((*it)->id == t->id)
-					{
-						(*it) = t;
-						typeExists = true;
-						break;
-					}
-				}
-				if (!typeExists)
-				{
-					m_types.push_back(t);
-				}
-			}
+			(*it) = t;
+			typeExists = true;
+			break;
 		}
 	}
-}
-
-void boidManager::loadMap(){
-	ifstream mapFile;
-	//Open the file
-	mapFile.open(mapFileName);
-	//If the file successfully opened
-	if (mapFile.is_open())
+	if (!typeExists)
 	{
-		//Loop through each line in the file
-		while (!mapFile.eof())
-		{
-			//Get the current line of the file
-			string currentLine;
-			getline(mapFile, currentLine);
-
-			//We have reached a waypoint declaration
-			if (currentLine == "<waypoint>"){
-				Waypoint* w = new Waypoint;
-				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
-				while (currentLine != "</waypoint>" && !mapFile.eof()){
-					//Move to next line
-					getline(mapFile, currentLine);
-					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos){
-						int start = currentLine.find("<x>") + 3;
-						int end = currentLine.find("</x>");
-						pos.x = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos){
-						int start = currentLine.find("<y>") + 3;
-						int end = currentLine.find("</y>");
-						pos.y = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos){
-						int start = currentLine.find("<z>") + 3;
-						int end = currentLine.find("</z>");
-						pos.z = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<size>") != string::npos && currentLine.find("</size>") != string::npos){
-						int start = currentLine.find("<size>") + 6;
-						int end = currentLine.find("</size>");
-						w->setAreaOfInfluence(stof(currentLine.substr(start, end - start)));
-					}
-					else if (currentLine.find("<type>") != string::npos && currentLine.find("</type>") != string::npos){
-						int start = currentLine.find("<type>") + 6;
-						int end = currentLine.find("</type>");
-						string type = (currentLine.substr(start, end - start));
-						if (type == "start"){
-							w->setMyType(waypointType::start);
-						}
-						else if (type == "outpost"){
-							w->setMyType(waypointType::outpost);
-						}
-						else if (type == "finish"){
-							w->setMyType(waypointType::finish);
-						}
-					}
-					else if (currentLine.find("<typeToAffect>") != string::npos && currentLine.find("</typeToAffect>") != string::npos){
-						int start = currentLine.find("<typeToAffect>") + 14;
-						int end = currentLine.find("</typeToAffect>");
-						w->setTypeToAffect(stoi((currentLine.substr(start, end - start))));
-					}
-				}
-				w->SetPos(pos);
-				addWaypoint(w);
-			}
-			else if (currentLine == "<obstacle>")
-			{
-				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
-				while (currentLine != "</waypoint>" && !mapFile.eof()){
-					//Move to next line
-					getline(mapFile, currentLine);
-					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos){
-						int start = currentLine.find("<x>") + 3;
-						int end = currentLine.find("</x>");
-						pos.x = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos){
-						int start = currentLine.find("<y>") + 3;
-						int end = currentLine.find("</y>");
-						pos.y = stof(currentLine.substr(start, end - start));
-					}
-					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos){
-						int start = currentLine.find("<z>") + 3;
-						int end = currentLine.find("</z>");
-						pos.z = stof(currentLine.substr(start, end - start));
-					}
-				}
-				Boid* b = spawnBoid(0);
-				b->SetPos(pos);
-				myBoids.push_back(b);
-			}
-		}
+		m_types.push_back(t);
 	}
 }
-
 
 void boidManager::addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi){
 	//Initialize new waypoint
@@ -257,15 +70,18 @@ void boidManager::deleteAllWaypoints(){
 
 void boidManager::breedBoids(Boid* a, Boid* b)
 {
-	if (a->isAlive() && b->isAlive())
+	if (SimulationParameters::canBreed)
 	{
-		if (a->GetLastBreedTime() >= SimulationParameters::breedDelay && b->GetLastBreedTime() > SimulationParameters::breedDelay)
+		if (a->isAlive() && b->isAlive())
 		{
-			
-			Boid* baby = spawnBoid(a->getType()->id);
-			a->Breed();
-			b->Breed();
-			baby->SetPos(a->GetPos());
+			if (a->getBreedStatus() && b->getBreedStatus())
+			{
+
+				Boid* baby = spawnBoid(a->getType()->id);
+				a->Breed();
+				b->Breed();
+				baby->SetPos(a->GetPos());
+			}
 		}
 	}
 }
@@ -310,7 +126,7 @@ Boid* boidManager::spawnBoid(int type)
 	{
 		t = new Type();
 		t->id = type;
-		t->breedDelay = SimulationParameters::breedDelay;
+		t->breedDelay = 20000.0f;
 		t->health = 100.0f;
 		t->scale = 1.0f;
 		if (type == 0)
@@ -506,7 +322,7 @@ void boidManager::deleteBoid(int type){
 	for (vector<Boid*>::iterator it = myBoids.begin(); it != myBoids.end();)
 	{
 		//If the current boid is the same type as the given type
-		if ((*it)->getType()->id = type)
+		if ((*it)->getType()->id == type)
 		{
 			//Delete this boid and stop searching
 			(*it) = nullptr;

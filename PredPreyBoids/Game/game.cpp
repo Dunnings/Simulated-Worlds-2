@@ -26,7 +26,7 @@ map<int, int> SimulationParameters::boidCount;
 float SimulationParameters::obstacleSize;
 float SimulationParameters::mapSize;
 float SimulationParameters::spawnDelay;
-float SimulationParameters::breedDelay;
+bool SimulationParameters::canBreed;
 bool SimulationParameters::respawnOnFinish;
 bool SimulationParameters::respawnOnDeath;
 bool SimulationParameters::cursorObstacle;
@@ -49,7 +49,7 @@ void Game::loadParameters()
 	para.mapSize = 500.0f;
 	para.starvationTime = 5000.0f;
 	para.spawnDelay = 0.0f;
-	para.breedDelay = 10000.0f;
+	para.canBreed = true;
 	para.showDebugMenu = true;
 	para.showDebugForces = true;
 	para.showDebugSight = true;
@@ -59,123 +59,273 @@ void Game::loadParameters()
 	para.respawnOnDeath = false;
 	para.obstacleSize = 40.0f;
 	//Create an input file stream using the parameter file name
-	ifstream parameterFile;
+	ifstream file;
 	//Open the file
-	parameterFile.open(fileName);
+	file.open(fileName);
 	//If the file successfully opened
-	if (parameterFile.is_open())
+	if (file.is_open())
 	{
 		//Update boolean to track if the file has loaded
 		loadedFile = true;
+		string currentLine;
 		//Loop through each line in the file
-		while (!parameterFile.eof())
+		while (!file.eof())
 		{
 			//Get the current line of the file
-			string currentLine;
-			getline(parameterFile, currentLine);
-			//If the lane contains an equals
-			if (currentLine.find(" = "))
+			getline(file, currentLine);
+			if (currentLine == "<parameters>")
 			{
-				//Get the parameter (before the =)
-				string parameter;
-				parameter = currentLine.substr(0, currentLine.find(" = "));
-				//Get the value (after the =)
-				string value;
-				value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
+				while (currentLine != "</parameters>" && !file.eof())
+				{
+					getline(file, currentLine);
+					//If the lane contains an equals
+					if (currentLine.find(" = ") != string::npos)
+					{
+						//Get the parameter (before the =)
+						string parameter;
+						parameter = currentLine.substr(0, currentLine.find(" = "));
+						//Get the value (after the =)
+						string value;
+						value = currentLine.substr(currentLine.find(" = ") + 3, currentLine.size());
 
-				//Check if parameter is equal to any of the parameters in SimulationParameters
-				//If it is then set the parameter to the value
-				if (parameter == "groupStrength")
-				{
-					para.groupStrength = stof(value);
+						//Check if parameter is equal to any of the parameters in SimulationParameters
+						//If it is then set the parameter to the value
+						if (parameter == "groupStrength")
+						{
+							para.groupStrength = stof(value);
+						}
+						else if (parameter == "groupDistance")
+						{
+							para.groupDistance = stof(value);
+						}
+						else if (parameter == "groupHeading")
+						{
+							para.groupHeading = stof(value);
+						}
+						else if (parameter == "boidMaxSpeed")
+						{
+							para.boidMaxSpeed = stof(value);
+						}
+						else if (parameter == "obstacleSize")
+						{
+							para.obstacleSize = stof(value);
+						}
+						else if (parameter == "mapSize")
+						{
+							para.mapSize = stof(value);
+						}
+						else if (parameter == "starvationTime")
+						{
+							para.starvationTime = stof(value);
+						}
+						else if (parameter == "spawnDelay")
+						{
+							para.spawnDelay = stof(value);
+						}
+						else if (parameter == "canBreed")
+						{
+							para.canBreed = (value == "true" || value == "1");
+						}
+						else if (parameter == "showDebugMenu")
+						{
+							para.showDebugMenu = (value == "true" || value == "1");
+						}
+						else if (parameter == "showDebugForces")
+						{
+							para.showDebugForces = (value == "true" || value == "1");
+						}
+						else if (parameter == "showDebugSight")
+						{
+							para.showDebugSight = (value == "true" || value == "1");
+						}
+						else if (parameter == "showDebugWaypoints")
+						{
+							para.showDebugWaypoints = (value == "true" || value == "1");
+						}
+						else if (parameter == "cursorObstacle")
+						{
+							para.cursorObstacle = (value == "true" || value == "1");
+						}
+						else if (parameter == "respawnOnDeath")
+						{
+							para.respawnOnDeath = (value == "true" || value == "1");
+						}
+						else if (parameter == "respawnOnFinish")
+						{
+							para.respawnOnFinish = (value == "true" || value == "1");
+						}
+					}
 				}
-				else if (parameter == "groupDistance")
+			}
+			else if (currentLine == "<waypoint>")
+			{
+				Waypoint* w = new Waypoint;
+				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
+				while (currentLine != "</waypoint>" && !file.eof())
 				{
-					para.groupDistance = stof(value);
+					//Move to next line
+					getline(file, currentLine);
+					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos)
+					{
+						int start = currentLine.find("<x>") + 3;
+						int end = currentLine.find("</x>");
+						pos.x = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos)
+					{
+						int start = currentLine.find("<y>") + 3;
+						int end = currentLine.find("</y>");
+						pos.y = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos)
+					{
+						int start = currentLine.find("<z>") + 3;
+						int end = currentLine.find("</z>");
+						pos.z = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<size>") != string::npos && currentLine.find("</size>") != string::npos)
+					{
+						int start = currentLine.find("<size>") + 6;
+						int end = currentLine.find("</size>");
+						w->setAreaOfInfluence(stof(currentLine.substr(start, end - start)));
+					}
+					else if (currentLine.find("<type>") != string::npos && currentLine.find("</type>") != string::npos)
+					{
+						int start = currentLine.find("<type>") + 6;
+						int end = currentLine.find("</type>");
+						string type = (currentLine.substr(start, end - start));
+						if (type == "start")
+						{
+							w->setMyType(waypointType::start);
+						}
+						else if (type == "outpost")
+						{
+							w->setMyType(waypointType::outpost);
+						}
+						else if (type == "finish")
+						{
+							w->setMyType(waypointType::finish);
+						}
+					}
+					else if (currentLine.find("<typeToAffect>") != string::npos && currentLine.find("</typeToAffect>") != string::npos)
+					{
+						int start = currentLine.find("<typeToAffect>") + 14;
+						int end = currentLine.find("</typeToAffect>");
+						w->setTypeToAffect(stoi((currentLine.substr(start, end - start))));
+					}
 				}
-				else if (parameter == "groupHeading")
+				w->SetPos(pos);
+				boidMan->addWaypoint(w);
+			}
+			else if (currentLine == "<obstacle>")
+			{
+				Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
+				while (currentLine != "</waypoint>" && !file.eof())
 				{
-					para.groupHeading = stof(value);
+					//Move to next line
+					getline(file, currentLine);
+					if (currentLine.find("<x>") != string::npos && currentLine.find("</x>") != string::npos)
+					{
+						int start = currentLine.find("<x>") + 3;
+						int end = currentLine.find("</x>");
+						pos.x = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<y>") != string::npos && currentLine.find("</y>") != string::npos)
+					{
+						int start = currentLine.find("<y>") + 3;
+						int end = currentLine.find("</y>");
+						pos.y = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<z>") != string::npos && currentLine.find("</z>") != string::npos)
+					{
+						int start = currentLine.find("<z>") + 3;
+						int end = currentLine.find("</z>");
+						pos.z = stof(currentLine.substr(start, end - start));
+					}
 				}
-				else if (parameter == "boidMaxSpeed")
+				Boid* b = boidMan->spawnBoid(0);
+				b->SetPos(pos);
+			}
+			else if (currentLine == "<type>")
+			{
+				Type* t = new Type();
+
+				while (currentLine != "</type>" && !file.eof())
 				{
-					para.boidMaxSpeed = stof(value);
+					//Move to next line
+					getline(file, currentLine);
+					if (currentLine.find("<id>") != string::npos && currentLine.find("</id>") != string::npos)
+					{
+						int start = currentLine.find("<id>") + 4;
+						int end = currentLine.find("</id>");
+						t->id = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<scale>") != string::npos && currentLine.find("</scale>") != string::npos)
+					{
+						int start = currentLine.find("<scale>") + 7;
+						int end = currentLine.find("</scale>");
+						t->scale = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<sight>") != string::npos && currentLine.find("</sight>") != string::npos)
+					{
+						int start = currentLine.find("<sight>") + 7;
+						int end = currentLine.find("</sight>");
+						t->sight = stoi(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<breedDelay>") != string::npos && currentLine.find("</breedDelay>") != string::npos)
+					{
+						int start = currentLine.find("<breedDelay>") + 12;
+						int end = currentLine.find("</breedDelay>");
+						t->breedDelay = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<speed>") != string::npos && currentLine.find("</speed>") != string::npos)
+					{
+						int start = currentLine.find("<speed>") + 7;
+						int end = currentLine.find("</speed>");
+						t->speed = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<health>") != string::npos && currentLine.find("</health>") != string::npos)
+					{
+						int start = currentLine.find("<health>") + 8;
+						int end = currentLine.find("</health>");
+						t->health = stof(currentLine.substr(start, end - start));
+					}
+					else if (currentLine.find("<prey>") != string::npos && currentLine.find("</prey>") != string::npos)
+					{
+						int start = currentLine.find("<prey>") + 6;
+						int end = currentLine.find("</prey>");
+						t->prey.push_back(stoi(currentLine.substr(start, end - start)));
+					}
+
 				}
-				else if (parameter == "obstacleSize")
-				{
-					para.obstacleSize = stof(value);
-				}
-				else if (parameter == "mapSize")
-				{
-					para.mapSize = stof(value);
-				}
-				else if (parameter == "starvationTime")
-				{
-					para.starvationTime = stof(value);
-				}
-				else if (parameter == "spawnDelay")
-				{
-					para.spawnDelay = stof(value);
-				}
-				else if (parameter == "breedDelay")
-				{
-					para.breedDelay = stof(value);
-				}
-				else if (parameter == "showDebugMenu")
-				{
-					para.showDebugMenu = (value == "true");
-				}
-				else if (parameter == "showDebugForces")
-				{
-					para.showDebugForces = (value == "true");
-				}
-				else if (parameter == "showDebugSight")
-				{
-					para.showDebugSight = (value == "true");
-				}
-				else if (parameter == "showDebugWaypoints")
-				{
-					para.showDebugWaypoints = (value == "true");
-				}
-				else if (parameter == "cursorObstacle")
-				{
-					para.cursorObstacle = (value == "true");
-				}
-				else if (parameter == "respawnOnDeath")
-				{
-					para.respawnOnDeath = (value == "true");
-				}
-				else if (parameter == "respawnOnFinish")
-				{
-					para.respawnOnFinish = (value == "true");
-				}
+				boidMan->addType(t);
 			}
 		}
 		//Close the file
-		parameterFile.close();
+		file.close();
 	}
 	else{
 		ofstream outputFile;
 		outputFile.open(fileName);
-		outputFile << "writing to file";
-		outputFile << "groupStrength = " << para.groupStrength;
-		outputFile << "groupDistance = " << para.groupDistance;
-		outputFile << "groupHeading = " << para.groupHeading;
-		outputFile << "boidMaxSpeed = " << para.boidMaxSpeed;
-		outputFile << "mapSize = " << para.mapSize;
-		outputFile << "starvationTime = " << para.starvationTime;
-		outputFile << "spawnDelay = " << para.spawnDelay;
-		outputFile << "breedDelay = " << para.breedDelay;
-		outputFile << "showDebugMenu = " << para.showDebugMenu;
-		outputFile << "showDebugForces = " << para.showDebugForces;
-		outputFile << "showDebugSight = " << para.showDebugSight;
-		outputFile << "showDebugWaypoints = " << para.showDebugWaypoints;
-		outputFile << "cursorObstacle = " << para.cursorObstacle;
-		outputFile << "respawnOnFinish = " << para.respawnOnFinish;
-		outputFile << "respawnOnDeath = " << para.respawnOnDeath;
-		outputFile << "obstacleSize = " << para.obstacleSize;
+		outputFile << "groupStrength = " << para.groupStrength << endl;
+		outputFile << "groupDistance = " << para.groupDistance << endl;
+		outputFile << "groupHeading = " << para.groupHeading << endl;
+		outputFile << "boidMaxSpeed = " << para.boidMaxSpeed << endl;
+		outputFile << "mapSize = " << para.mapSize << endl;
+		outputFile << "starvationTime = " << para.starvationTime << endl;
+		outputFile << "spawnDelay = " << para.spawnDelay << endl;
+		outputFile << "canBreed = " << para.canBreed << endl;
+		outputFile << "showDebugMenu = " << para.showDebugMenu << endl;
+		outputFile << "showDebugForces = " << para.showDebugForces << endl;
+		outputFile << "showDebugSight = " << para.showDebugSight << endl;
+		outputFile << "showDebugWaypoints = " << para.showDebugWaypoints << endl;
+		outputFile << "cursorObstacle = " << para.cursorObstacle << endl;
+		outputFile << "respawnOnFinish = " << para.respawnOnFinish << endl;
+		outputFile << "respawnOnDeath = " << para.respawnOnDeath << endl;
+		outputFile << "obstacleSize = " << para.obstacleSize << endl;
 		outputFile.close();
 	}
+
 }
 
 
@@ -220,12 +370,13 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GD->p3d = _pd3dDevice;
 	m_GD->EF = m_myEF;
 	
-	//Load in simulation paramaters
-	loadParameters();
-
 	//Initialize boid manager
 	boidMan = new boidManager();
 	m_GameObjects.push_back(boidMan);
+
+	//Load in simulation paramaters
+	loadParameters();
+
 
 	//Initialize main camera
 	m_mainCam = new Camera(0.25f * XM_PI, 640.0f / 480.0f, 1.0f, 10000.0f, Vector3::Zero, Vector3::UnitY);
@@ -314,45 +465,40 @@ bool Game::update()
 		{
 			if (SimulationParameters::showDebugMenu)
 			{
-				if (mousePos.y <= 345 && mousePos.y >= 330)
+				if (mousePos.y < 400 && mousePos.y > 378)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugForces = !SimulationParameters::showDebugForces;
 				}
-				else if (mousePos.y <= 365 && mousePos.y >= 350)
+				else if (mousePos.y < 422 && mousePos.y > 400)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugSight = !SimulationParameters::showDebugSight;
 				}
-				else if (mousePos.y <= 385 && mousePos.y >= 370)
+				else if (mousePos.y < 444 && mousePos.y > 422)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugWaypoints = !SimulationParameters::showDebugWaypoints;
 				}
-				else if (mousePos.y <= 405 && mousePos.y >= 390)
+				else if (mousePos.y < 466 && mousePos.y > 444)
 				{
 					//Clicked respawn on death
 					SimulationParameters::respawnOnDeath = !SimulationParameters::respawnOnDeath;
 				}
-				else if (mousePos.y <= 425 && mousePos.y >= 410)
+				else if (mousePos.y < 488 && mousePos.y > 466)
 				{
 					//Clicked respawn on death
 					SimulationParameters::respawnOnFinish = !SimulationParameters::respawnOnFinish;
 				}
-				else if (mousePos.y <= 445 && mousePos.y >= 430)
+				else if (mousePos.y < 510 && mousePos.y > 488)
 				{
 					//Clicked respawn on death
 					SimulationParameters::spawnDelay += 200.0f;
 				}
-				else if (mousePos.y <= 465 && mousePos.y >= 450)
-				{
-					//Clicked respawn on death
-					spawnPerPress++;
-				}
 			}
 			else
 			{
-				if (mousePos.y <= 75 && mousePos.y >= 50)
+				if (mousePos.y <= 75 && mousePos.y >= 48)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugMenu = !SimulationParameters::showDebugMenu;
@@ -371,18 +517,11 @@ bool Game::update()
 			{
 				if (SimulationParameters::showDebugMenu)
 				{
-					if (mousePos.y <= 445 && mousePos.y >= 430)
+					if (mousePos.y <= 510 && mousePos.y >= 488)
 					{
 						if (SimulationParameters::spawnDelay > 0)
 						{
 							SimulationParameters::spawnDelay -= 200.0f;
-						}
-					}
-					else if (mousePos.y <= 465 && mousePos.y >= 450)
-					{
-						if (spawnPerPress > 0)
-						{
-							spawnPerPress--;
 						}
 					}
 				}
@@ -397,7 +536,7 @@ bool Game::update()
 	}
 
 	//Toggle spawn/kill
-	if ((m_keyboardState[DIK_DELETE] & 0x80) && !(m_prevKeyboardState[DIK_DELETE] & 0x80))
+	if (((m_keyboardState[DIK_DELETE] & 0x80) && !(m_prevKeyboardState[DIK_DELETE] & 0x80)) || ((m_keyboardState[DIK_BACKSPACE] & 0x80) && !(m_prevKeyboardState[DIK_BACKSPACE] & 0x80)))
 	{
 		spawn = !spawn;
 	}
@@ -410,6 +549,12 @@ bool Game::update()
 			SimulationParameters::cursorObstacle = !SimulationParameters::cursorObstacle;
 			ShowCursor(!SimulationParameters::cursorObstacle);
 		}
+	}
+
+	//Toggle breeding
+	if ((m_keyboardState[DIK_B] & 0x80) && !(m_prevKeyboardState[DIK_B] & 0x80))
+	{
+		SimulationParameters::canBreed = !SimulationParameters::canBreed;
 	}
 
 	//Toggle pause/play
@@ -509,7 +654,6 @@ bool Game::update()
 			//Kill x boids of type
 			for (int i = 0; i < spawnPerPress; i++)
 			{
-
 				boidMan->deleteBoid(type);
 			}
 		}
@@ -533,8 +677,6 @@ bool Game::update()
 	if ((m_keyboardState[DIK_F5] & 0x80) && !(m_prevKeyboardState[DIK_F5] & 0x80))
 	{
 		loadParameters();
-		boidMan->loadMap();
-		boidMan->loadTypes();
 		boidMan->respawnAllBoids(true);
 	}
 	/*Open parameters file
@@ -548,7 +690,7 @@ bool Game::update()
 	if ((m_keyboardState[DIK_F8] & 0x80) && !(m_prevKeyboardState[DIK_F8] & 0x80))
 	{
 		boidMan->deleteAllWaypoints();
-		string cmd = "notepad.exe " + boidMan->mapFileName;
+		string cmd = "notepad.exe " + boidMan->fileName;
 		system(cmd.c_str());
 		boidMan->loadMap();
 	}
@@ -604,62 +746,67 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "~ Debug Menu ~";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::SlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 40.0f;
+		yPos += 44.0f;
 
 		sstm << "~ Controls ~";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[F1] - Toggle Menu";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[F5] - Reload Settings";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[F9] - Kill Everything";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[Tab] - Toggle Obstacle Mouse";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
-		sstm << "[1-5] - Spawn/Kill " << spawnPerPress << " boid(s)";
+		string spawnkill = "Spawn";
+		if (!spawn)
+		{
+			spawnkill = "Kill";
+		}
+		sstm << "[1-5] - " << spawnkill << " " << spawnPerPress << " boid(s)";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[Delete] - Toggle Spawn/Kill";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
-		sstm << "[+/-] Modify Affected Quantity";
+		sstm << "[+/-] Adjust Spawn Amount";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[Enter] - Switch Camera";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "[Space] Play/Pause";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 40.0f;
+		yPos += 44.0f;
 
 		sstm << "~ Simulation Settings ~";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		string tempS = "False";
 		XMVECTOR tempColor = Colors::Red;
@@ -667,7 +814,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Display Force Arrows: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		tempS = "False";
 		tempColor = Colors::Red;
@@ -675,7 +822,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Display Sight Range: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		tempS = "False";
 		tempColor = Colors::Red;
@@ -683,7 +830,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Display Waypoints: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		tempS = "False";
 		tempColor = Colors::Red;
@@ -691,7 +838,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Respawn On Death: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		tempS = "False";
 		tempColor = Colors::Red;
@@ -699,49 +846,52 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Respawn On Finish: " << tempS;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
-		sstm << "Breed Delay: " << SimulationParameters::breedDelay;
-		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
+		tempS = "False";
+		tempColor = Colors::Red;
+		if (SimulationParameters::canBreed) { tempS = "True"; tempColor = Colors::Green; }
+		sstm << "Breeding: " << tempS;
+		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), tempColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "Spawn Delay: " << SimulationParameters::spawnDelay;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 40.0f;
+		yPos += 44.0f;
 
 		sstm << "~ Boid Settings ~";
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "Max Speed (Tier 1): " << SimulationParameters::boidMaxSpeed;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "Flock Size: " << SimulationParameters::groupDistance;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "Flocking Strength: " << SimulationParameters::groupStrength;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 20.0f;
+		yPos += 22.0f;
 
 		sstm << "Velocity Matching Strength: " << SimulationParameters::groupHeading;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 40.0f;
+		yPos += 44.0f;
 
 		if (SimulationParameters::boidCount.size() > 0)
 		{
 			sstm << "~ Tally ~";
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 		}
 
 		for (map<int, int>::iterator it = SimulationParameters::boidCount.begin(); it != SimulationParameters::boidCount.end(); it++)
@@ -749,11 +899,11 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 			sstm << "# of type [" << (*it).first << "]: " << (*it).second;
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 		}
 		if (SimulationParameters::boidCount.size() > 0)
 		{
-			yPos += 20.0f;
+			yPos += 22.0f;
 		}
 
 		POINT mouse;
@@ -761,44 +911,44 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm << "Mouse Position: x:" << mouse.x << " y:" << mouse.y;
 		m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 		sstm.str(std::string());
-		yPos += 40.0f;
+		yPos += 44.0f;
 
 		if (m_DD->cam == m_predCamera && m_predCamera->GetTarget() != nullptr && m_predCamera->GetTarget()->isAlive())
 		{
 			sstm << "~ Selected Unit ~";
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Current Health: " << m_predCamera->GetTarget()->getHealth();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Current Weight: " << m_predCamera->GetTarget()->getWeight();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Current Speed: " << m_predCamera->GetTarget()->getSpeed();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Maximum Speed: " << m_predCamera->GetTarget()->getMaxSpeed();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Current Position (x,y,z): " << m_predCamera->GetTarget()->GetPos().x << ", " << m_predCamera->GetTarget()->GetPos().y << ", " << m_predCamera->GetTarget()->GetPos().z;
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 
 			sstm << "Current Direction (x,y,z): " << m_predCamera->GetTarget()->getDirection().x << ", " << m_predCamera->GetTarget()->getDirection().y << ", " << m_predCamera->GetTarget()->getDirection().z;
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
-			yPos += 20.0f;
+			yPos += 22.0f;
 		}
 	}
 	else

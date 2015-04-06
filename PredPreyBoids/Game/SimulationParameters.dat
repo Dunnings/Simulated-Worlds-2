@@ -1,14 +1,125 @@
-groupStrength = 0.1
-groupDistance = 500.0
+<parameters>
+groupStrength = 0
+groupDistance = 200
 groupHeading = 0.7
-boidMaxSpeed = 80.0
-mapSize = 600.0
-starvationTime = 0.0
-cursorObstacle = false
-obstacleSize = 40.0
-respawnOnDeath = false
-respawnOnFinish = true
-showDebugMenu = true
-showDebugSight = false
-showDebugForces = true
-showDebugWaypoints = true
+boidMaxSpeed = 20
+mapSize = 500
+starvationTime = 5000
+spawnDelay = 200
+canBreed = 0
+showDebugMenu = 1
+showDebugForces = 1
+showDebugSight = 0
+showDebugWaypoints = 1
+cursorObstacle = 0
+respawnOnFinish = 1
+respawnOnDeath = 0
+obstacleSize = 40
+</parameters>
+
+<type>
+<id>1</id>
+<scale>1</scale>
+<breedDelay>20000.0</breedDelay>
+<speed>20.0</speed>
+<sight>50.0</sight>
+<health>100.0</health>
+</type>
+
+<type>
+<id>2</id>
+<scale>2</scale>
+<breedDelay>35000.0</breedDelay>
+<speed>35.0</speed>
+<sight>100.0</sight>
+<health>100.0</health>
+<prey>1</prey>
+</type>
+
+<type>
+<id>3</id>
+<scale>4</scale>
+<breedDelay>50000.0</breedDelay>
+<speed>60.0</speed>
+<sight>350.0</sight>
+<health>100.0</health>
+<prey>1</prey>
+<prey>2</prey>
+</type>
+
+<type>
+<id>4</id>
+<scale>7</scale>
+<breedDelay>100000.0</breedDelay>
+<speed>50.0</speed>
+<sight>300.0</sight>
+<health>100.0</health>
+<prey>1</prey>
+<prey>2</prey>
+<prey>3</prey>
+</type>
+
+<waypoint>
+<type>start</type>
+<typeToAffect>1</typeToAffect>
+<x>-600.0</x>
+<z>-1200.0</z>
+</waypoint>
+
+<waypoint>
+<type>start</type>
+<typeToAffect>1</typeToAffect>
+<x>-1200.0</x>
+<z>0.0</z>
+</waypoint>
+
+<waypoint>
+<type>finish</type>
+<typeToAffect>1</typeToAffect>
+<x>1000.0</x>
+<z>1000.0</z>
+</waypoint>
+
+<waypoint>
+<type>finish</type>
+<typeToAffect>1</typeToAffect>
+<x>1000.0</x>
+<z>-1000.0</z>
+</waypoint>
+
+<waypoint>
+<type>outpost</type>
+<typeToAffect>2</typeToAffect>
+<size>500.0</size>
+<x>10.0</x>
+<z>200.0</z>
+</waypoint>
+
+<waypoint>
+<type>outpost</type>
+<typeToAffect>3</typeToAffect>
+<size>2000.0</size>
+<x>0.0</x>
+<z>0.0</z>
+</waypoint>
+
+<waypoint>
+<type>outpost</type>
+<typeToAffect>4</typeToAffect>
+<size>2000.0</size>
+<x>0.0</x>
+<z>0.0</z>
+</waypoint>
+
+<waypoint>
+<type>outpost</type>
+<typeToAffect>5</typeToAffect>
+<size>2000.0</size>
+<x>0.0</x>
+<z>0.0</z>
+</waypoint>
+
+<obstacle>
+<x>100.0</x>
+<z>1000.0</z>
+</obstacle>

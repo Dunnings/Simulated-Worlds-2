@@ -39,14 +39,8 @@ public:
 	void addWaypoint(Waypoint* w);
 	//Delete all waypoints
 	void deleteAllWaypoints();
-	//Load waypoints from file
-	void loadMap();
 	//Load types from file
-	void loadTypes();
-	//Waypoint file name
-	string mapFileName = "levelData.dat";
-	//Types file name
-	string typesFileName = "types.dat";
+	void addType(Type* t);
 private:
 	//Vector containing all boids waiting to be spawned
 	vector<Boid*> toSpawn;
