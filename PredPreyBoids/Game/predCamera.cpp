@@ -15,7 +15,7 @@ PredCamera::~PredCamera()
 
 }
 
-void PredCamera::changeTarget(Boid* _target)
+void PredCamera::ChangeTarget(Boid* _target)
 {
 	//Change the current target
 	m_targetObject = _target;
@@ -29,7 +29,7 @@ void PredCamera::Tick(GameData* _GD)
 		//Set m_target to the target's position
 		m_target = m_targetObject->GetPos();
 		//Rotate the camera around it's target based on the target's yaw
-		float objectYaw = atan2(m_targetObject->getDirection().x, m_targetObject->getDirection().z);
+		float objectYaw = atan2(m_targetObject->GetDirection().x, m_targetObject->GetDirection().z);
 		Matrix rotMat = Matrix::CreateRotationY(objectYaw);
 		//Move the camera to the correct position using rotation matrix
 		m_pos = m_target + Vector3::Transform(m_dpos, rotMat);

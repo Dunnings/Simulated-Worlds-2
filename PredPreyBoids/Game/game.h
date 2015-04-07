@@ -74,7 +74,7 @@ protected:
 
 	//Parameters
 	bool loadedFile = false;
-	void loadParameters();
+	void LoadParameters();
 	string fileName = "SimulationParameters.dat";
 	int spawnPerPress = 1;
 	bool spawn = true;

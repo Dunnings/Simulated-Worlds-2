@@ -19,28 +19,28 @@ public:
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
 	//Create and return a new boid of given type
-	Boid* spawnBoid(int type);
+	Boid* SpawnBoid(int type);
 	//Breed boids
-	void breedBoids(Boid* a, Boid* b);
+	void BreedBoids(Boid* a, Boid* b);
 	//Respawn current boid
-	Boid* respawnBoid(Boid* _b, bool keepPosition);
+	Boid* ReSpawnBoid(Boid* _b, bool keepPosition);
 	//Respawn all boids
-	void respawnAllBoids(bool keepPosition);
+	void RespawnAllBoids(bool keepPosition);
 	//Delete given boid
-	void deleteBoid(Boid* b);
+	void DeleteBoid(Boid* b);
 	//Delete first boid of given type
-	void deleteBoid(int type);
+	void DeleteBoid(int type);
 	//Return the top-most level boid
-	Boid* getHighestBOID();
+	Boid* GetHighestBoid();
 	//Delete all boids
-	void deleteAll();
+	void DeleteAll();
 	//Create a waypoint
-	void addWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi);
-	void addWaypoint(Waypoint* w);
+	void AddWaypoint(waypointType _type, int _affects, Vector3 _pos, float _aoi);
+	void AddWaypoint(Waypoint* w);
 	//Delete all waypoints
-	void deleteAllWaypoints();
+	void DeleteAllWaypoints();
 	//Load types from file
-	void addType(Type* t);
+	void AddType(Type* t);
 private:
 	//Vector containing all boids waiting to be spawned
 	vector<Boid*> toSpawn;

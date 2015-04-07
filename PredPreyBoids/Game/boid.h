@@ -21,6 +21,14 @@ public:
 	virtual void Draw(DrawData* DD);
 	//Create the vertex buffer and initialize the object
 	virtual void initialize();
+	//Damage the boid and kill it if necessary
+	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
+	//Increment weight and increase physical size
+	void Eat();
+	//Decrement weight and decrease physical size
+	void Starve();
+
+
 	//Set the boid's current speed
 	void SetSpeed(float speed) { m_speed = speed; };
 	//Set the boid's maximum speed
@@ -36,13 +44,9 @@ public:
 	//Set the type of boid
 	void SetType(Type* type) { m_type = type; };
 	//Set time between breeding
-	void setBreedDelay(float _d) { breedDelay = _d; };
+	void SetBreedDelay(float _d) { breedDelay = _d; };
 	//Set how full the boid is
 	void SetWeight(int w) { m_weight = w; };
-	//Set finish waypoint
-	void setFinish(Waypoint* _finish) { finish = _finish; };
-	//Set outpost waypoint
-	void setOutpost(Waypoint* _outpost) { outpost = _outpost; };
 	//Boid has bred
 	void Breed();
 
@@ -52,44 +56,29 @@ public:
 	//Get outpost waypoint
 	Waypoint* GetOutpost() { return outpost; };
 	//Get the boid's current speed
-	float getSpeed() { return m_speed; };
+	float GetSpeed() { return m_speed; };
 	//Get the boid's maximum speed
-	float getMaxSpeed() { return max_speed; };
+	float GetMaxSpeed() { return max_speed; };
 	//Get the boid's sight
-	float getSight() { return m_sight; };
+	float GetSight() { return m_sight; };
 	//Get the boid's current direction
-	Vector3 getDirection() { return m_direction; };
-	//Get the boid's current grouping direction
-	Vector3 getGroupDirection() { return m_groupDirection; };
-	//Get the boid's current grouping heading
-	Vector3 getGroupHeading() { return m_groupHeading; };
+	Vector3 GetDirection() { return m_direction; };
 	//Get the boid's type
-	Type* getType() { return m_type; };
+	Type* GetType() { return m_type; };
 	//Get the boid's alive state
-	bool isAlive() { return m_alive; };
+	bool GetAliveState() { return m_alive; };
 	//Can this boid breed?
-	bool getBreedStatus() { if (GetTickCount64() - lastBreedTickCount > breedDelay) { return true; } return false; };
+	bool GetBreedingStatus() { if (GetTickCount64() - lastBreedTickCount > breedDelay) { return true; } return false; };
 	//Get the boid's current weight
-	int getWeight() { return m_weight; };
+	int GetWeight() { return m_weight; };
 	//Get the boid's current health
-	float getHealth() { return m_health; };
+	float GetHealth() { return m_health; };
 	//Get last time boid bred
 	ULONGLONG GetLastBreedTime() { return lastBreedTickCount; };
-	//Get the boid's smooth yaw
-	float getSmoothYaw() { return smooth_yaw; };
 	//Get the boid's scale
 	Vector3 GetScale() { return m_scale; };
 	//Get the boid's scale
 	float GetFloatScale() { return (m_scale.x + m_scale.y + m_scale.z) / 3; };
-	//Nearest group position
-	Vector3 m_grouping;
-
-	//Damage the boid and kill it if necessary
-	void Damage(float _dmg) { m_health -= _dmg; if (m_health <= 0.0f) { m_alive = false; m_health = 0.0f; } };
-	//Increment weight and increase physical size
-	void Eat();
-	//Decrement weight and decrease physical size
-	void Starve();
 protected:
 	//The boid's hierarchial level
 	Type* m_type;

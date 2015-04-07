@@ -14,14 +14,12 @@ public:
 	//Return the boid that this camera is connected to
 	Boid* GetTarget(){ return m_targetObject; };
 	//Set the boid that this camera is connected to
-	void changeTarget(Boid* _target);
+	void ChangeTarget(Boid* _target);
 protected:
 	//Target boid
 	Boid* m_targetObject;
 	//Offset vector
 	Vector3	m_dpos;
-	//Smooothed out yaw
-	float m_aimYaw;
 };
 
 #endif

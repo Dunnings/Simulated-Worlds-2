@@ -36,7 +36,7 @@ bool SimulationParameters::showDebugForces;
 bool SimulationParameters::showDebugSight;
 bool SimulationParameters::showDebugWaypoints;
 
-void Game::loadParameters()
+void Game::LoadParameters()
 {
 	SimulationParameters para;
 	//To make the compiler happy
@@ -187,7 +187,7 @@ void Game::loadParameters()
 					{
 						int start = currentLine.find("<size>") + 6;
 						int end = currentLine.find("</size>");
-						w->setAreaOfInfluence(stof(currentLine.substr(start, end - start)));
+						w->SetAreaOfInfluence(stof(currentLine.substr(start, end - start)));
 					}
 					else if (currentLine.find("<type>") != string::npos && currentLine.find("</type>") != string::npos)
 					{
@@ -196,26 +196,26 @@ void Game::loadParameters()
 						string type = (currentLine.substr(start, end - start));
 						if (type == "start")
 						{
-							w->setMyType(waypointType::start);
+							w->SetMyType(waypointType::start);
 						}
 						else if (type == "outpost")
 						{
-							w->setMyType(waypointType::outpost);
+							w->SetMyType(waypointType::outpost);
 						}
 						else if (type == "finish")
 						{
-							w->setMyType(waypointType::finish);
+							w->SetMyType(waypointType::finish);
 						}
 					}
 					else if (currentLine.find("<typeToAffect>") != string::npos && currentLine.find("</typeToAffect>") != string::npos)
 					{
 						int start = currentLine.find("<typeToAffect>") + 14;
 						int end = currentLine.find("</typeToAffect>");
-						w->setTypeToAffect(stoi((currentLine.substr(start, end - start))));
+						w->SetTypeToAffect(stoi((currentLine.substr(start, end - start))));
 					}
 				}
 				w->SetPos(pos);
-				boidMan->addWaypoint(w);
+				boidMan->AddWaypoint(w);
 			}
 			else if (currentLine == "<obstacle>")
 			{
@@ -243,7 +243,7 @@ void Game::loadParameters()
 						pos.z = stof(currentLine.substr(start, end - start));
 					}
 				}
-				Boid* b = boidMan->spawnBoid(0);
+				Boid* b = boidMan->SpawnBoid(0);
 				b->SetPos(pos);
 			}
 			else if (currentLine == "<type>")
@@ -298,7 +298,7 @@ void Game::loadParameters()
 					}
 
 				}
-				boidMan->addType(t);
+				boidMan->AddType(t);
 			}
 		}
 		//Close the file
@@ -375,7 +375,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HINSTANCE _hInstance) :m_playTime(0), m_my
 	m_GameObjects.push_back(boidMan);
 
 	//Load in simulation paramaters
-	loadParameters();
+	LoadParameters();
 
 
 	//Initialize main camera
@@ -577,7 +577,7 @@ bool Game::update()
 		if (m_DD->cam != m_predCamera)
 		{
 			m_DD->cam = m_predCamera;
-			m_predCamera->changeTarget(boidMan->getHighestBOID());
+			m_predCamera->ChangeTarget(boidMan->GetHighestBoid());
 		}
 		else
 		{
@@ -654,7 +654,7 @@ bool Game::update()
 			//Kill x boids of type
 			for (int i = 0; i < spawnPerPress; i++)
 			{
-				boidMan->deleteBoid(type);
+				boidMan->DeleteBoid(type);
 			}
 		}
 		else
@@ -663,7 +663,7 @@ bool Game::update()
 			for (int i = 0; i < spawnPerPress; i++)
 			{
 
-				boidMan->spawnBoid(type);
+				boidMan->SpawnBoid(type);
 			}
 		}
 	}
@@ -676,8 +676,8 @@ bool Game::update()
 	//Reload parameters
 	if ((m_keyboardState[DIK_F5] & 0x80) && !(m_prevKeyboardState[DIK_F5] & 0x80))
 	{
-		loadParameters();
-		boidMan->respawnAllBoids(true);
+		LoadParameters();
+		boidMan->RespawnAllBoids(true);
 	}
 	/*Open parameters file
 	if ((m_keyboardState[DIK_F6] & 0x80) && !(m_prevKeyboardState[DIK_F6] & 0x80))
@@ -689,7 +689,7 @@ bool Game::update()
 	//Open map file
 	if ((m_keyboardState[DIK_F8] & 0x80) && !(m_prevKeyboardState[DIK_F8] & 0x80))
 	{
-		boidMan->deleteAllWaypoints();
+		boidMan->DeleteAllWaypoints();
 		string cmd = "notepad.exe " + boidMan->fileName;
 		system(cmd.c_str());
 		boidMan->loadMap();
@@ -698,7 +698,7 @@ bool Game::update()
 	//Delete all boids
 	if ((m_keyboardState[DIK_F9] & 0x80) && !(m_prevKeyboardState[DIK_F9] & 0x80))
 	{
-		boidMan->deleteAll();
+		boidMan->DeleteAll();
 	}
 
 	//Calculate frame time-step dt for passing down to game objects
@@ -913,29 +913,29 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 		sstm.str(std::string());
 		yPos += 44.0f;
 
-		if (m_DD->cam == m_predCamera && m_predCamera->GetTarget() != nullptr && m_predCamera->GetTarget()->isAlive())
+		if (m_DD->cam == m_predCamera && m_predCamera->GetTarget() != nullptr && m_predCamera->GetTarget()->GetAliveState())
 		{
 			sstm << "~ Selected Unit ~";
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), Colors::LightSlateGray, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
 
-			sstm << "Current Health: " << m_predCamera->GetTarget()->getHealth();
+			sstm << "Current Health: " << m_predCamera->GetTarget()->GetHealth();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
 
-			sstm << "Current Weight: " << m_predCamera->GetTarget()->getWeight();
+			sstm << "Current Weight: " << m_predCamera->GetTarget()->GetWeight();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
 
-			sstm << "Current Speed: " << m_predCamera->GetTarget()->getSpeed();
+			sstm << "Current Speed: " << m_predCamera->GetTarget()->GetSpeed();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
 
-			sstm << "Maximum Speed: " << m_predCamera->GetTarget()->getMaxSpeed();
+			sstm << "Maximum Speed: " << m_predCamera->GetTarget()->GetMaxSpeed();
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
@@ -945,7 +945,7 @@ void Game::render(ID3D11DeviceContext* _pd3dImmediateContext)
 			sstm.str(std::string());
 			yPos += 22.0f;
 
-			sstm << "Current Direction (x,y,z): " << m_predCamera->GetTarget()->getDirection().x << ", " << m_predCamera->GetTarget()->getDirection().y << ", " << m_predCamera->GetTarget()->getDirection().z;
+			sstm << "Current Direction (x,y,z): " << m_predCamera->GetTarget()->GetDirection().x << ", " << m_predCamera->GetTarget()->GetDirection().y << ", " << m_predCamera->GetTarget()->GetDirection().z;
 			m_DD2D->m_Font->DrawString(m_DD2D->m_Sprites.get(), Helper::charToWChar(sstm.str().c_str()), Vector2(10, yPos), textColor, 0.0f, g_XMZero, Vector2(0.5, 0.5), SpriteEffects::SpriteEffects_None, 0.0f);
 			sstm.str(std::string());
 			yPos += 22.0f;
