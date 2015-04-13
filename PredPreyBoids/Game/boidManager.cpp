@@ -383,6 +383,7 @@ Boid* boidManager::GetHighestBoid()
 
 void boidManager::Tick(GameData* GD)
 {
+	//Spawn any boids waiting to be spawned
 	if (toSpawn.size() > 0){
 		if (GetTickCount64() - lastSpawnTime > SimulationParameters::spawnDelay){
 			myBoids.push_back(toSpawn.front());

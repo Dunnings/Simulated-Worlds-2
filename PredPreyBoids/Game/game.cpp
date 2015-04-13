@@ -465,30 +465,35 @@ bool Game::update()
 		{
 			if (SimulationParameters::showDebugMenu)
 			{
-				if (mousePos.y < 400 && mousePos.y > 378)
+				if (mousePos.y < 378 && mousePos.y > 356)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugForces = !SimulationParameters::showDebugForces;
 				}
-				else if (mousePos.y < 422 && mousePos.y > 400)
+				else if (mousePos.y < 400 && mousePos.y > 378)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugSight = !SimulationParameters::showDebugSight;
 				}
-				else if (mousePos.y < 444 && mousePos.y > 422)
+				else if (mousePos.y < 422 && mousePos.y > 400)
 				{
 					//Clicked respawn on death
 					SimulationParameters::showDebugWaypoints = !SimulationParameters::showDebugWaypoints;
 				}
-				else if (mousePos.y < 466 && mousePos.y > 444)
+				else if (mousePos.y < 444 && mousePos.y > 422)
 				{
 					//Clicked respawn on death
 					SimulationParameters::respawnOnDeath = !SimulationParameters::respawnOnDeath;
 				}
-				else if (mousePos.y < 488 && mousePos.y > 466)
+				else if (mousePos.y < 466 && mousePos.y > 444)
 				{
 					//Clicked respawn on death
 					SimulationParameters::respawnOnFinish = !SimulationParameters::respawnOnFinish;
+				}
+				else if (mousePos.y < 488 && mousePos.y > 466)
+				{
+					//Clicked respawn on death
+					SimulationParameters::canBreed = !SimulationParameters::canBreed;
 				}
 				else if (mousePos.y < 510 && mousePos.y > 488)
 				{
