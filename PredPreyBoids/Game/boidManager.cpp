@@ -524,7 +524,7 @@ void boidManager::Tick(GameData* GD)
 					else if (currentBoid->GetType()->id == newBoid->GetType()->id)
 					{
 						//If the two boid's are colliding
-						if (dist < 20.0f)
+						if (dist < 20.0f * currentBoid->GetFloatScale())
 						{
 							//Create a vector pointing from the newBoid to the current boid
 							Vector3 contactModifier = (currentBoid->GetPos() - newBoid->GetPos());
