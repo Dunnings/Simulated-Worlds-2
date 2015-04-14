@@ -21,16 +21,21 @@ boidManager::~boidManager()
 
 void boidManager::AddType(Type* t)
 {
+	//Boolean to hold check wether type already exists
 	bool typeExists = false;
+	//Search m_types for type
 	for (vector<Type*>::iterator it = m_types.begin(); it != m_types.end(); it++)
 	{
+		//If this type ID is equal to the given type ID
 		if ((*it)->id == t->id)
 		{
+			//Update type in m_types
 			(*it) = t;
 			typeExists = true;
 			break;
 		}
 	}
+	//If the type doesn't exist then add it
 	if (!typeExists)
 	{
 		m_types.push_back(t);
@@ -70,13 +75,16 @@ void boidManager::DeleteAllWaypoints(){
 
 void boidManager::BreedBoids(Boid* a, Boid* b)
 {
+	//If the simulation has breeding enabled
 	if (SimulationParameters::canBreed)
 	{
+		//Check the two boids are alive
 		if (a->GetAliveState() && b->GetAliveState())
 		{
+			//Check both boids can breed
 			if (a->GetBreedingStatus() && b->GetBreedingStatus())
 			{
-
+				//Create a new boid
 				Boid* baby = SpawnBoid(a->GetType()->id);
 				a->Breed();
 				b->Breed();
@@ -87,11 +95,15 @@ void boidManager::BreedBoids(Boid* a, Boid* b)
 }
 
 Boid* boidManager::ReSpawnBoid(Boid* b, bool keepPos){
+	//Create a new boid
 	Boid* b2 = SpawnBoid(b->GetType()->id);
+	//If keepPos is true then keep the original position
 	if (keepPos){
 		b2->SetPos(b->GetPos());
 	}
+	//Delete the first boid
 	DeleteBoid(b);
+	//Return the new boid
 	return b2;
 }
 
@@ -179,6 +191,7 @@ Boid* boidManager::SpawnBoid(int type)
 		}
 	}
 	int startRandom = 0;
+	//If there are multiple start waypoints for this type, choose one randomly
 	if (startWaypoints.size() > 1)
 	{
 		startRandom = rand() % (startWaypoints.size());
@@ -196,6 +209,7 @@ Boid* boidManager::SpawnBoid(int type)
 		i++;
 	}
 
+	//If there is an outpost waypoint for this type spawn there
 	vector<Waypoint*> outpostWaypoints;
 	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++)
 	{
@@ -208,6 +222,7 @@ Boid* boidManager::SpawnBoid(int type)
 		}
 	}
 	int outpostRandom = 0;
+	//If there are multiple outpost waypoints for this type, choose one randomly
 	if (outpostWaypoints.size() > 1)
 	{
 		outpostRandom = rand() % (outpostWaypoints.size());
@@ -223,6 +238,7 @@ Boid* boidManager::SpawnBoid(int type)
 		i2++;
 	}
 
+	//If there is a finish waypoint for this type spawn there
 	vector<Waypoint*> finishWaypoints;
 	for (vector<Waypoint*>::iterator it = m_waypoints.begin(); it != m_waypoints.end(); it++)
 	{
@@ -235,6 +251,7 @@ Boid* boidManager::SpawnBoid(int type)
 		}
 	}
 	int finishRandom = 0;
+	//If there are multiple outpost waypoints for this type, choose one randomly
 	if (finishWaypoints.size() > 1)
 	{
 		finishRandom = rand() % (finishWaypoints.size());
